@@ -17,14 +17,15 @@ const entranceMat = new THREE.MeshPhongMaterial({ color: 0x88C878 });
 
 // Slot definitions — col/row in grid coords (col 0–6 left→right, row 0–5 back→front)
 // row 0 = back of room (z ≈ -5), row 5 = front near entrance (z ≈ +5)
+// typeKey maps to ITEM_TYPES in itemTypes.js; null = reserved slot with no item yet
 const SLOT_DEFS = [
-  { id: 'treadmill_1', col: 1, row: 4 },
-  { id: 'treadmill_2', col: 3, row: 4 },
-  { id: 'bench_1',     col: 1, row: 2 },
-  { id: 'bike_1',      col: 3, row: 2 },
-  { id: 'dumbbell_1',  col: 5, row: 2 },
-  { id: 'bathroom',    col: 1, row: 0 },
-  { id: 'locker_1',    col: 5, row: 0 },
+  { id: 'treadmill_1', col: 1, row: 4, typeKey: 'TREADMILL' },
+  { id: 'treadmill_2', col: 3, row: 4, typeKey: 'TREADMILL' },
+  { id: 'bench_1',     col: 1, row: 2, typeKey: 'BENCH'     },
+  { id: 'bike_1',      col: 3, row: 2, typeKey: 'BIKE'      },
+  { id: 'dumbbell_1',  col: 5, row: 2, typeKey: 'DUMBBELL_RACK' },
+  { id: 'bathroom',    col: 1, row: 0, typeKey: null         },
+  { id: 'locker_1',    col: 5, row: 0, typeKey: null         },
 ];
 
 export function gridToWorld(col, row) {
@@ -103,7 +104,15 @@ export class GymRoom {
       );
       mesh.position.set(pos.x, 0.03, pos.z);
       this.scene.add(mesh);
-      this.slots.push({ id: def.id, position: pos, mesh, machine: null });
+      this.slots.push({
+        id:      def.id,
+        typeKey: def.typeKey,
+        gridCol: def.col,
+        gridRow: def.row,
+        position: pos,
+        markerMesh: mesh,  // the blue slot-marker quad; distinct from the item mesh
+        item: null,        // filled by ItemManager after item creation
+      });
     }
   }
 }
