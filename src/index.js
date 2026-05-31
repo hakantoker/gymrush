@@ -1,13 +1,15 @@
-import * as THREE           from 'three';
-import { Renderer }          from './core/Renderer.js';
-import { GameLoop }          from './core/GameLoop.js';
-import { InputManager }      from './core/InputManager.js';
-import { CameraController }  from './core/CameraController.js';
-import { UI }                from './ui/UI.js';
-import { GymRoom }           from './scene/GymRoom.js';
-import { ItemManager }       from './systems/ItemManager.js';
-import { DesktopControls }   from './controls/DesktopControls.js';
-import { Player }            from './player/Player.js';
+import * as THREE            from 'three';
+import { Renderer }           from './core/Renderer.js';
+import { GameLoop }           from './core/GameLoop.js';
+import { InputManager }       from './core/InputManager.js';
+import { CameraController }   from './core/CameraController.js';
+import { UI }                 from './ui/UI.js';
+import { GymRoom }            from './scene/GymRoom.js';
+import { ItemManager }        from './systems/ItemManager.js';
+import { Economy }            from './systems/Economy.js';
+import { DesktopControls }    from './controls/DesktopControls.js';
+import { Player }             from './player/Player.js';
+import { CustomerSpawner }    from './customers/CustomerSpawner.js';
 
 const VIEW_SIZE = 13;
 
@@ -42,26 +44,32 @@ async function main() {
   sun.shadow.camera.right  = sun.shadow.camera.top    =  25;
   scene.add(sun);
 
-  // Gym room
-  const room = new GymRoom(scene);
-
-  // Items
+  // Gym room + items
+  const room        = new GymRoom(scene);
   const itemManager = new ItemManager(scene);
   for (const slot of room.slots) {
     if (!slot.typeKey) continue;
     slot.item = itemManager.createItem(slot.typeKey, slot);
   }
 
-  // Player — WASD moves the character, arrow keys pan the camera
+  // Economy — wire to UI so money counter updates on every transaction
+  const economy = new Economy(500);
+  economy.on(({ total }) => ui.updateMoney(total));
+
+  // Player
   const controls = new DesktopControls(input);
   const player   = new Player(scene, controls);
 
-  // Camera controller — arrow keys pan in isometric space
+  // Customers
+  const spawner = new CustomerSpawner(scene, itemManager, economy);
+
+  // Camera panning — arrow keys
   const camCtrl = new CameraController(camera, input);
 
   const loop = new GameLoop(
     (delta) => {
       player.update(delta);
+      spawner.update(delta);
       camCtrl.update(delta);
       itemManager.update(delta);
     },
