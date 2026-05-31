@@ -1,70 +1,50 @@
 import * as THREE from 'three';
-import { gsap } from 'gsap';
 import { Renderer } from './core/Renderer.js';
 import { GameLoop } from './core/GameLoop.js';
 import { InputManager } from './core/InputManager.js';
 import { UI } from './ui/UI.js';
+import { GymRoom } from './scene/GymRoom.js';
+
+const VIEW_SIZE = 10; // orthographic half-height in world units
 
 async function main() {
-  // --- Core systems ---
   const renderer = new Renderer();
-  const input = new InputManager();
-  const ui = new UI();
+  const input    = new InputManager();  // eslint-disable-line no-unused-vars
+  const ui       = new UI();
   await ui.init();
 
-  // --- Scene ---
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x1a1a2e);
-  scene.fog = new THREE.Fog(0x1a1a2e, 20, 60);
+  scene.background = new THREE.Color(0xF0EBE0);
 
-  // Camera
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(0, 5, 10);
+  // Orthographic camera — isometric angle (equal distance on all axes)
+  const aspect = window.innerWidth / window.innerHeight;
+  const camera = new THREE.OrthographicCamera(
+    -VIEW_SIZE * aspect, VIEW_SIZE * aspect,
+    VIEW_SIZE, -VIEW_SIZE,
+    0.1, 200
+  );
+  camera.position.set(15, 15, 15);
   camera.lookAt(0, 0, 0);
-  renderer.setCamera(camera);
+  renderer.setCamera(camera, VIEW_SIZE);
 
-  // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-  scene.add(ambient);
-  const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+  // Lighting — soft ambient + single directional (GDD spec)
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.0);
   sun.position.set(10, 20, 10);
   sun.castShadow = true;
+  sun.shadow.camera.near = 0.5;
+  sun.shadow.camera.far  = 80;
+  sun.shadow.camera.left = sun.shadow.camera.bottom = -20;
+  sun.shadow.camera.right = sun.shadow.camera.top   =  20;
   scene.add(sun);
 
-  // Ground
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(40, 40),
-    new THREE.MeshPhongMaterial({ color: 0x2d5a27 })
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
-  scene.add(ground);
+  // Gym room — floor, walls, machine slot markers
+  const room = new GymRoom(scene);  // eslint-disable-line no-unused-vars
 
-  // Demo cube (placeholder for player)
-  const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshPhongMaterial({ color: 0x4fc3f7 })
-  );
-  cube.position.y = 0.5;
-  cube.castShadow = true;
-  scene.add(cube);
-
-  // GSAP intro animation
-  gsap.from(cube.scale, { x: 0, y: 0, z: 0, duration: 0.8, ease: 'back.out(1.7)' });
-
-  // --- Game loop ---
   const loop = new GameLoop(
-    (delta) => {
-      // Move cube with WASD
-      const speed = 5 * delta;
-      if (input.isDown('KeyW')) cube.position.z -= speed;
-      if (input.isDown('KeyS')) cube.position.z += speed;
-      if (input.isDown('KeyA')) cube.position.x -= speed;
-      if (input.isDown('KeyD')) cube.position.x += speed;
-    },
+    (_delta) => { /* game systems go here */ },
     () => renderer.render(scene)
   );
-
   loop.start();
 }
 

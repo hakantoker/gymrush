@@ -18,14 +18,23 @@ export class Renderer {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.renderer.setSize(w, h);
-    if (this.camera) {
+    if (!this.camera) return;
+    if (this.camera.isOrthographicCamera) {
+      const aspect = w / h;
+      const v = this._orthoViewSize;
+      this.camera.left   = -v * aspect;
+      this.camera.right  =  v * aspect;
+      this.camera.top    =  v;
+      this.camera.bottom = -v;
+    } else {
       this.camera.aspect = w / h;
-      this.camera.updateProjectionMatrix();
     }
+    this.camera.updateProjectionMatrix();
   }
 
-  setCamera(camera) {
+  setCamera(camera, orthoViewSize) {
     this.camera = camera;
+    if (orthoViewSize !== undefined) this._orthoViewSize = orthoViewSize;
   }
 
   render(scene) {
