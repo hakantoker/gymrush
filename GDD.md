@@ -61,40 +61,106 @@ Customer enters gym
 
 ---
 
-## 5. Machines & Tools
+## 5. Items
 
-### Machine Tiers
+All interactive items in the gym belong to one of two categories: **Machines** or **Utilities**. Each category has its own state machine. Every item type is defined by a config object (data-driven) so new items can be added without new classes.
 
-| Tier | Visual | Price to Use | Unlock Cost | Notes |
-|---|---|---|---|---|
-| 1 | Basic, worn look | Low | Free / Starter | Available from game start |
-| 2 | Clean, modern | Medium | Mid-game cost | Attracts more customers |
-| 3 | Premium, glowing accent | High | Late-game cost | Rare customers, big payout |
+---
 
-### Machine List (MVP)
+### Category A — Machines (gym equipment)
 
-| Machine | Category | Notes |
+Customers occupy machines for a session. Machines can malfunction and escalate to broken if ignored.
+
+**State machine:**
+```
+IDLE → IN_USE ──(malfunction chance per session)──→ NEEDS_REPAIR
+  ↑                                                      ↓
+  └──────────── player fixes (quick) ────────────────────┘
+                                                          ↓ (timer expires)
+                                                       BROKEN
+                                                          ↓
+                                              player fixes (costs $) → IDLE
+```
+
+| State | Indicator | Description |
 |---|---|---|
-| Treadmill | Cardio | Most common, customers use frequently |
-| Weight Bench | Strength | Medium usage frequency |
-| Dumbbell Rack | Strength | Passive, no timer needed |
-| Stationary Bike | Cardio | Cheaper alternative to treadmill |
-| Pull-up Bar | Strength | Budget option |
-| Shower Stall | Facility | Unlockable, requires cleaning |
-| Locker | Facility | Increases customer satisfaction |
+| IDLE | — | Available for next customer |
+| IN_USE | Blue | Occupied, session timer running |
+| NEEDS_REPAIR | Orange | Malfunctioned — player must fix within repair window |
+| BROKEN | Red | Repair window missed — costs money to fix, customer refunded |
 
-### Machine States
+**Malfunction** happens randomly during a session (configurable chance per item type). NEEDS_REPAIR has a countdown timer; if it expires the machine transitions to BROKEN.
+
+**Machine list:**
+
+| Item | Area | Tier | Notes |
+|---|---|---|---|
+| Treadmill | Main Gym | 1–3 | Most common, high malfunction rate |
+| Weight Bench | Main Gym | 1–3 | Medium frequency |
+| Stationary Bike | Main Gym | 1–3 | Cheaper cardio option |
+| Dumbbell Rack | Main Gym | 1 | Passive — no timer, no malfunction |
+| Pull-up Bar | Main Gym | 1 | Budget option |
+| Boxing Bag | Boxing Ring | 1–2 | Unlockable area |
+| Sauna Chair | Sauna | 2–3 | Unlockable area |
+
+**Machine tiers:**
+
+| Tier | Visual | Fee | Unlock | Notes |
+|---|---|---|---|---|
+| 1 | Basic, worn | Low | Free | Starter |
+| 2 | Clean, modern | Medium | Mid-game | More customers |
+| 3 | Premium, glowing | High | Late-game | Rare customers, big payout |
+
+---
+
+### Category B — Utilities (consumables & service tools)
+
+Utilities are not used by customers for sessions — they support the gym environment. They drain over time or per use and need restocking/refilling by the player or a worker.
+
+**State machine:**
 ```
-IDLE → IN_USE → NEEDS_CLEANING → IDLE
-           ↓
-      WARNING (partial break) → BROKEN (if ignored)
+AVAILABLE ──(drains per use or over time)──→ NEEDS_REFILL
+                                                   ↓
+                                      player/worker refills → AVAILABLE
 ```
 
-- **IDLE:** Available for customers
-- **IN_USE:** Occupied, timer counting
-- **WARNING:** Orange indicator — player must fix within ~30s
-- **BROKEN:** Red indicator — machine unusable, refund triggered
-- **NEEDS_CLEANING:** After use, must be wiped before next customer
+| Item | Area | Drains by | Notes |
+|---|---|---|---|
+| Water Dispenser | Locker Room | Per customer use | Customers stop at it after sessions |
+| Towel Box (clean) | Locker Room | Per customer (1 towel taken) | Part of the towel system — see §5a |
+| Towel Box (dirty) | Locker Room | Per customer (1 towel returned) | Fills up — triggers laundry need |
+| Soap Dispenser | Bathroom | Per shower use | — |
+| Toilet Paper | Bathroom | Over time | — |
+
+---
+
+### 5a. Towel System (Laundry Area unlock)
+
+Unlocking the **Laundry Area** adds the full towel cycle to the gym.
+
+**The towel box is a dual-slot utility:**
+- **Clean side** — stock of fresh towels customers pick up before training
+- **Dirty side** — pile of used towels customers return after training
+
+**Customer towel cycle:**
+```
+Customer enters
+→ picks up 1 clean towel (clean count -1)
+→ trains
+→ returns towel to dirty side (dirty count +1)
+→ exits
+```
+
+**Laundry cycle:**
+```
+Dirty side reaches threshold
+→ NEEDS_WASH indicator appears
+→ Player or Laundry Worker loads Washing Machine
+→ Washing Machine runs (timed cycle)
+→ Cycle complete → dirty count resets, clean count refills
+```
+
+If clean towels run out → customers cannot get a towel → satisfaction penalty.
 
 ---
 
@@ -158,25 +224,61 @@ Spawn at entrance
 
 ---
 
-## 8. Gym Layout (MVP)
+## 7a. Workers
+
+Players can hire NPC workers to automate tasks. Workers are persistent NPCs with their own movement and action loops — they are not player-controlled.
+
+### Worker Types
+
+| Worker | Automates | Hire Cost | Salary |
+|---|---|---|---|
+| Personal Trainer | Helps troubled customers (replaces player "!" response) | High | Medium |
+| Laundry Worker | Loads washing machine, refills towel box | Medium | Low |
+| Cashier | Speeds up customer payment at exit | Medium | Low |
+| Cleaning Worker | Cleans bathroom, wipes machines after use | Low | Low |
+
+### Worker Behavior
+- Each worker has a **task priority list** — they scan for their task type and walk to it
+- Workers have the same `IDLE → MOVING → WORKING` states as the player
+- Workers are independent of each other and the player
+- Player can dismiss (fire) a worker at any time
+
+### Unlock Condition
+Workers become available for hire after a specific milestone (TBD — tied to progression economy).
+
+---
+
+## 8. Areas & Layout
+
+Each area is a predefined room with fixed item slots. Areas are unlocked by spending money and appear adjacent to existing rooms in the scene.
+
+### Area List
+
+| Area | Default | Key Items |
+|---|---|---|
+| Main Gym | Unlocked | Treadmills, Bench, Bike, Dumbbell Rack, Pull-up Bar |
+| Locker Room | Unlocked | Lockers, Water Dispenser, Towel Box |
+| Bathroom | Unlocked | Showers, Soap Dispenser, Toilet Paper |
+| Sauna | Locked | Sauna Chairs |
+| Laundry | Locked | Washing Machine (enables full towel system) |
+| Boxing Ring | Locked | Boxing Bags |
+
+### MVP Layout (Main Gym — single room)
 
 ```
 ┌─────────────────────────────────┐
-│  [Entrance]                     │
+│           [Entrance]            │
 │                                 │
-│  [Treadmill] [Treadmill]        │
+│  [Treadmill]    [Treadmill]     │
 │                                 │
-│  [Bench]     [Bike]             │
+│  [Bench]  [Bike]  [Dumbbell]   │
 │                                 │
-│  [Dumbbell Rack]                │
-│                                 │
-│  [Bathroom Door]  [Locker Area] │
+│  [Bathroom ->]  [Locker Room ->]│
 └─────────────────────────────────┘
 ```
 
-- Fixed single-room layout for MVP
-- Machines have assigned floor slots (not drag-and-drop in MVP)
-- Expansion adds a second room to the right
+- Fixed slots per area — no drag-and-drop
+- Expansion unlocks new rooms that appear adjacent in the scene
 
 ---
 
@@ -220,10 +322,10 @@ Spawn at entrance
 ## 12. Out of Scope (MVP)
 
 - Drag-and-drop machine placement
-- Staff hiring (post-MVP milestone at $15k)
-- Multiple gym floors
+- Multiple gym floors (vertical expansion)
 - Multiplayer / leaderboard
 - Sound design (placeholder only)
+- Workers (post-MVP — unlocked via progression milestones)
 
 ---
 
