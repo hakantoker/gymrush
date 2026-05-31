@@ -336,3 +336,8 @@ Each area is a predefined room with fixed item slots. Areas are unlocked by spen
 - [x] **Machine placement** — Predefined fixed slots per room. No drag-and-drop placement. Machines can be upgraded in-place or sold to free the slot.
 - [x] **Failure state** — No bankruptcy or hard failure. Customer satisfaction affects tips and rating only; player always earns money and continues playing.
 - [x] **Expansion model** — Unlocking a new room adds a new predefined area to manage (Monkey Mart style). Layout is designed to maximize player movement and urgency, not player customization.
+- [x] **Machine malfunction trigger** — Random per session, weighted by wear. Break chance = `min(maxBreakChance, baseBreakChance + useCount × breakChanceGrowth)`. Checked once at end of each session. Each machine type has its own three parameters.
+- [x] **Wear reset** — Only a full repair (BROKEN state, costs money) resets `useCount` to 0. A quick fix (NEEDS_REPAIR) returns the machine to IDLE but does not reduce wear — use count keeps accumulating. This incentivises catching problems early before full breakdown.
+- [x] **Item categories** — Two categories: **Machine** (IDLE → IN_USE → NEEDS_REPAIR → BROKEN) and **Utility** (AVAILABLE → NEEDS_REFILL). All item types are data-driven config objects in `itemTypes.js`; no new class needed per item type.
+- [x] **Towel system** — Dual-slot Towel Box (clean count + dirty count). Customer takes clean towel on entry, returns dirty on exit. Washing Machine cycles dirty → clean. Enabled by unlocking Laundry Area.
+- [x] **Workers** — Post-MVP. Four types: Personal Trainer, Laundry Worker, Cashier, Cleaning Worker. Each automates a specific player task type.

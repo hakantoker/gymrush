@@ -53,4 +53,4 @@
 ---
 
 ## Open decisions
-- **Machine malfunction trigger** — does malfunction happen randomly during a session (probability per session) or after a fixed number of uses / fixed time regardless of use? Answer determines the timer architecture.
+- None. All decisions resolved — see GDD §13.
