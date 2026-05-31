@@ -31,17 +31,27 @@ Both canvases are initialized in [src/index.js](src/index.js) via `main()`, whic
 | `InputManager` | `src/core/InputManager.js` | Tracks keyboard (`keys` map by `e.code`) and mouse (NDC coords + buttons) |
 | `UI` | `src/ui/UI.js` | Initializes PixiJS app; owns the `hud` Container; exposes methods to update HUD text |
 
-### Current scene state (placeholder)
-The scene in `index.js` is a stub: perspective camera, a green ground plane, and a WASD-controlled blue cube. The GDD spec calls for an **orthographic camera** at an isometric angle — this needs to be swapped before building gameplay systems.
+### Build progress
 
-### Planned systems (not yet built)
-Per the GDD, the next systems to add are:
-- **Machine state machine** — `IDLE → IN_USE → WARNING → BROKEN → NEEDS_CLEANING` per machine
-- **Customer agent** — spawn, browse, use machine, pay/leave FSM with patience timer
-- **Player character** — click-to-move on floor, action queue, walk/idle AnimationMixer
-- **Waypoint pathfinding** — simple node graph for the single-room layout (no navmesh for MVP)
-- **Economy** — money, satisfaction score, day/time cycle
-- **Save system** — `localStorage` JSON snapshot
+| System | Status | Notes |
+|---|---|---|
+| Scene / camera | **Done** | Orthographic isometric camera (15,15,15), `VIEW_SIZE=10` |
+| Gym room layout | **Done** | `src/scene/GymRoom.js` — floor, walls, 7 slot markers, entrance gap |
+| Machine state machine | Next | — |
+| Player character | Pending | — |
+| Customer agents | Pending | — |
+| Economy + HUD | Pending | — |
+| Save system | Pending | — |
+
+**Next task:** machine state machine — `IDLE → IN_USE → WARNING → BROKEN → NEEDS_CLEANING`, one instance per slot, visible placeholder meshes per slot.
+
+### GymRoom layout details
+`src/scene/GymRoom.js` — 14×12 world units (7 cols × 6 rows, `CELL=2`). Entrance gap (3 units wide) in the front wall (z = +6, most visible from isometric camera). Exports `CELL`, `ROOM_W`, `ROOM_D`, `gridToWorld(col, row)` for use by other systems.
+
+Slot positions (col, row → world x, z):
+- treadmill_1 (1,4) → (-4, 3), treadmill_2 (3,4) → (0, 3)
+- bench_1 (1,2) → (-4, -1), bike_1 (3,2) → (0, -1), dumbbell_1 (5,2) → (4, -1)
+- bathroom (1,0) → (-4, -5), locker_1 (5,0) → (4, -5)
 
 ## Key conventions
 
