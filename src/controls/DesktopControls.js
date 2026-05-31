@@ -1,29 +1,39 @@
 /**
- * Reads WASD and returns a normalised {x, z} movement vector each frame.
- * Diagonal movement is normalised so speed is consistent in all directions.
+ * WASD movement mapped to isometric world directions.
  *
- * In world space (camera at +X,+Y,+Z, isometric):
- *   W → -Z   S → +Z   A → -X   D → +X
+ * The camera sits at (18,18,18) looking at origin, so screen axes project as:
+ *   screen right (+D) → world (+x, -z)
+ *   screen left  (+A) → world (-x, +z)
+ *   screen up    (+W) → world (-x, -z)
+ *   screen down  (+S) → world (+x, +z)
+ *
+ * Arrow keys are NOT bound here — they belong to CameraController (panning).
  */
+const INV_SQRT2 = 0.7071067811865476;
+
 export class DesktopControls {
   constructor(input) {
     this._input = input;
   }
 
-  /** @returns {{ x: number, z: number }} Each component in [-1, 1]. */
+  /** @returns {{ x: number, z: number }} Normalised world-space movement vector. */
   getMovement() {
     const i = this._input;
-    let x = 0, z = 0;
+    let sx = 0, sy = 0;   // raw screen-space axes before projection
 
-    // WASD only — arrow keys are reserved for camera panning (CameraController)
-    if (i.isDown('KeyW')) z -= 1;
-    if (i.isDown('KeyS')) z += 1;
-    if (i.isDown('KeyA')) x -= 1;
-    if (i.isDown('KeyD')) x += 1;
+    if (i.isDown('KeyW')) sy += 1;
+    if (i.isDown('KeyS')) sy -= 1;
+    if (i.isDown('KeyA')) sx -= 1;
+    if (i.isDown('KeyD')) sx += 1;
 
-    // Normalise diagonal so player never moves faster on diagonals
-    if (x !== 0 && z !== 0) { x *= 0.7071; z *= 0.7071; }
+    if (sx === 0 && sy === 0) return { x: 0, z: 0 };
 
-    return { x, z };
+    // Project screen → world XZ using the isometric camera mapping
+    let wx = (sx - sy) * INV_SQRT2;
+    let wz = (-sx - sy) * INV_SQRT2;
+
+    // Normalise so all directions (including diagonals) have the same speed
+    const len = Math.sqrt(wx * wx + wz * wz);
+    return { x: wx / len, z: wz / len };
   }
 }
