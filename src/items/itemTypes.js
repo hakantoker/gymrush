@@ -13,7 +13,7 @@ export const ITEM_TYPES = {
     category:          ItemCategory.MACHINE,
     label:             'Treadmill',
     color:             0x3A6EA5,
-    // Footprint: 1 col × 2 rows = 2 × 4 world units
+    effects:           ['cardio', 'endurance'],
     maxCapacity:       1,
     maxQueueSize:      3,
     useDuration:       18,
@@ -30,7 +30,7 @@ export const ITEM_TYPES = {
     category:          ItemCategory.MACHINE,
     label:             'Weight Bench',
     color:             0x8B3A3A,
-    // Footprint: 1 col × 2 rows = 2 × 4 world units
+    effects:           ['strength', 'upper_body'],
     maxCapacity:       1,
     maxQueueSize:      2,
     useDuration:       22,
@@ -47,7 +47,7 @@ export const ITEM_TYPES = {
     category:          ItemCategory.MACHINE,
     label:             'Stationary Bike',
     color:             0x2E7D32,
-    // Footprint: 1 col × 2 rows = 2 × 4 world units
+    effects:           ['cardio', 'lower_body', 'endurance'],
     maxCapacity:       1,
     maxQueueSize:      2,
     useDuration:       14,
@@ -64,7 +64,7 @@ export const ITEM_TYPES = {
     category:          ItemCategory.MACHINE,
     label:             'Dumbbell Rack',
     color:             0x5D4037,
-    // Footprint: 2 cols × 1 row = 4 × 2 world units
+    effects:           ['strength', 'upper_body'],
     maxCapacity:       1,
     maxQueueSize:      3,
     useDuration:       14,
