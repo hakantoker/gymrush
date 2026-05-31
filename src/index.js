@@ -7,7 +7,7 @@ import { UI }                from './ui/UI.js';
 import { GymRoom }           from './scene/GymRoom.js';
 import { ItemManager }       from './systems/ItemManager.js';
 
-const VIEW_SIZE = 10;
+const VIEW_SIZE = 13;   // larger view for the expanded 20×16 room
 
 async function main() {
   const renderer = new Renderer();
@@ -25,7 +25,7 @@ async function main() {
     VIEW_SIZE, -VIEW_SIZE,
     0.1, 200,
   );
-  camera.position.set(15, 15, 15);
+  camera.position.set(18, 18, 18);
   camera.lookAt(0, 0, 0);
   renderer.setCamera(camera, VIEW_SIZE);
 
@@ -36,8 +36,8 @@ async function main() {
   sun.castShadow = true;
   sun.shadow.camera.near   = 0.5;
   sun.shadow.camera.far    = 80;
-  sun.shadow.camera.left   = sun.shadow.camera.bottom = -20;
-  sun.shadow.camera.right  = sun.shadow.camera.top    =  20;
+  sun.shadow.camera.left   = sun.shadow.camera.bottom = -25;
+  sun.shadow.camera.right  = sun.shadow.camera.top    =  25;
   scene.add(sun);
 
   // Gym room
