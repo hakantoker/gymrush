@@ -1,7 +1,7 @@
 # GymRush — Build Progress
 
 ## Current task
-**Item system architecture** — data-driven item type configs, Machine and Utility base classes, state machines with timer-based escalation. One open question to resolve first (see Open Decisions).
+**Player character** — click-to-move on gym floor (raycast), action queue, walk/idle placeholder mesh.
 
 ---
 
@@ -30,17 +30,21 @@
 - [x] Floor, 4 walls with 3-unit entrance gap, green entrance mat
 - [x] 7 machine slot markers matching GDD layout
 
+### Item system
+- [x] `itemTypes.js` — all type configs (TREADMILL, BENCH, BIKE, DUMBBELL_RACK, WATER_DISPENSER, TOWEL_BOX, BOXING_RING, MAT_AREA, SOAP_DISPENSER)
+- [x] `GymItem` — base: state, mesh, `interact(actor)`, `update(delta)`
+- [x] `OccupiableItem` — `usingPeople[]`, `maxCapacity`, `startSession/endSession`
+- [x] `Machine` — wear-based break chance, `repairTimer`, NEEDS_REPAIR/BROKEN states
+- [x] `SharedFeature` — multi-customer capacity (boxing ring, mat area)
+- [x] `Utility` — stock/capacity, AVAILABLE/NEEDS_REFILL
+- [x] `TowelBox` — dual cleanCount/dirtyCount, `washComplete()` hook
+- [x] `ItemManager` — factory by typeKey, ticks all items, raycast lookup
+
 ---
 
 ## Up next (in order)
 
-1. **Item system** ← current
-   - `src/items/itemTypes.js` — type configs (TREADMILL, BENCH, WATER_DISPENSER, TOWEL_BOX, …)
-   - `src/items/Item.js` — base class: state machine, timer, mesh placeholder
-   - `src/items/Machine.js` — extends Item (IDLE/IN_USE/NEEDS_REPAIR/BROKEN + repair timer)
-   - `src/items/Utility.js` — extends Item (AVAILABLE/NEEDS_REFILL + capacity counter)
-   - `src/systems/ItemManager.js` — ticks all items, drives escalations
-2. Player character — click-to-move on floor, action queue
+1. **Player character** ← current — click-to-move on floor, action queue
 3. Customer agents — spawn, browse, use machine, pay/leave FSM
 4. Waypoint pathfinding — fixed node graph for the room
 5. Economy + HUD — money counter, satisfaction, tips
