@@ -33,12 +33,16 @@
 ### Item system
 - [x] `itemTypes.js` — all type configs (TREADMILL, BENCH, BIKE, DUMBBELL_RACK, WATER_DISPENSER, TOWEL_BOX, BOXING_RING, MAT_AREA, SOAP_DISPENSER)
 - [x] `GymItem` — base: state, mesh, `interact(actor)`, `update(delta)`
-- [x] `OccupiableItem` — `usingPeople[]`, `maxCapacity`, `startSession/endSession`
+- [x] `OccupiableItem` — `usingPeople[]`, `maxCapacity`, queue system (`queue[]`, `queuePositions[]`, `enqueue/dequeue/leaveQueue`)
 - [x] `Machine` — wear-based break chance, `repairTimer`, NEEDS_REPAIR/BROKEN states
 - [x] `SharedFeature` — multi-customer capacity (boxing ring, mat area)
 - [x] `Utility` — stock/capacity, AVAILABLE/NEEDS_REFILL
 - [x] `TowelBox` — dual cleanCount/dirtyCount, `washComplete()` hook
 - [x] `ItemManager` — factory by typeKey, ticks all items, raycast lookup
+- [x] `meshBuilders.js` — treadmill, bench, bike, dumbbell rack as composed Three.js geometry
+- [x] Multi-grid slots (colSpan/rowSpan) — machines span 1×2 or 2×1 cells
+- [x] Walls shortened to 1.5 — room fully visible from isometric camera
+- [x] `CameraController` — arrow key isometric panning
 
 ---
 
