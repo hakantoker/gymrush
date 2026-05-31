@@ -31,19 +31,7 @@ Both canvases are initialized in [src/index.js](src/index.js) via `main()`, whic
 | `InputManager` | `src/core/InputManager.js` | Tracks keyboard (`keys` map by `e.code`) and mouse (NDC coords + buttons) |
 | `UI` | `src/ui/UI.js` | Initializes PixiJS app; owns the `hud` Container; exposes methods to update HUD text |
 
-### Build progress
-
-| System | Status | Notes |
-|---|---|---|
-| Scene / camera | **Done** | Orthographic isometric camera (15,15,15), `VIEW_SIZE=10` |
-| Gym room layout | **Done** | `src/scene/GymRoom.js` — floor, walls, 7 slot markers, entrance gap |
-| Machine state machine | Next | — |
-| Player character | Pending | — |
-| Customer agents | Pending | — |
-| Economy + HUD | Pending | — |
-| Save system | Pending | — |
-
-**Next task:** machine state machine — `IDLE → IN_USE → WARNING → BROKEN → NEEDS_CLEANING`, one instance per slot, visible placeholder meshes per slot.
+See [PROGRESS.md](PROGRESS.md) for current build status and what to work on next.
 
 ### GymRoom layout details
 `src/scene/GymRoom.js` — 14×12 world units (7 cols × 6 rows, `CELL=2`). Entrance gap (3 units wide) in the front wall (z = +6, most visible from isometric camera). Exports `CELL`, `ROOM_W`, `ROOM_D`, `gridToWorld(col, row)` for use by other systems.
