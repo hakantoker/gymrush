@@ -5,31 +5,34 @@ export const ItemCategory = Object.freeze({
   TOWEL_BOX:      'towel_box',
 });
 
-// All item type definitions. Adding a new item = add one entry here, no new class needed.
 export const ITEM_TYPES = {
 
   // ── Machines ──────────────────────────────────────────────────────────────
   TREADMILL: {
+    key:               'TREADMILL',
     category:          ItemCategory.MACHINE,
     label:             'Treadmill',
-    color:             0x5B8CCC,
-    meshSize:          [1.4, 0.9, 0.7],   // [w, h, d] placeholder box
+    color:             0x3A6EA5,
+    // Footprint: 1 col × 2 rows = 2 × 4 world units
     maxCapacity:       1,
-    useDuration:       60,                 // seconds per session
+    maxQueueSize:      3,
+    useDuration:       60,
     baseBreakChance:   0.05,
     breakChanceGrowth: 0.02,
     maxBreakChance:    0.70,
-    repairWindow:      30,                 // seconds before NEEDS_REPAIR → BROKEN
+    repairWindow:      30,
     tier:              1,
     feePerSession:     10,
   },
 
   BENCH: {
+    key:               'BENCH',
     category:          ItemCategory.MACHINE,
     label:             'Weight Bench',
-    color:             0xCC6B5B,
-    meshSize:          [1.6, 0.5, 0.7],
+    color:             0x8B3A3A,
+    // Footprint: 1 col × 2 rows = 2 × 4 world units
     maxCapacity:       1,
+    maxQueueSize:      2,
     useDuration:       90,
     baseBreakChance:   0.03,
     breakChanceGrowth: 0.015,
@@ -40,11 +43,13 @@ export const ITEM_TYPES = {
   },
 
   BIKE: {
+    key:               'BIKE',
     category:          ItemCategory.MACHINE,
     label:             'Stationary Bike',
-    color:             0x5BCC7A,
-    meshSize:          [0.9, 1.1, 1.2],
+    color:             0x2E7D32,
+    // Footprint: 1 col × 2 rows = 2 × 4 world units
     maxCapacity:       1,
+    maxQueueSize:      2,
     useDuration:       50,
     baseBreakChance:   0.04,
     breakChanceGrowth: 0.018,
@@ -55,11 +60,13 @@ export const ITEM_TYPES = {
   },
 
   DUMBBELL_RACK: {
+    key:               'DUMBBELL_RACK',
     category:          ItemCategory.MACHINE,
     label:             'Dumbbell Rack',
-    color:             0x8B7355,
-    meshSize:          [1.8, 1.0, 0.6],
+    color:             0x5D4037,
+    // Footprint: 2 cols × 1 row = 4 × 2 world units
     maxCapacity:       1,
+    maxQueueSize:      3,
     useDuration:       45,
     baseBreakChance:   0.01,
     breakChanceGrowth: 0.005,
@@ -71,22 +78,24 @@ export const ITEM_TYPES = {
 
   // ── Shared Features ───────────────────────────────────────────────────────
   BOXING_RING: {
+    key:               'BOXING_RING',
     category:          ItemCategory.SHARED_FEATURE,
     label:             'Boxing Ring',
-    color:             0xCC5B5B,
-    meshSize:          [3.6, 0.3, 3.6],
+    color:             0xB71C1C,
     maxCapacity:       4,
+    maxQueueSize:      4,
     useDuration:       120,
     tier:              2,
     feePerSession:     20,
   },
 
   MAT_AREA: {
+    key:               'MAT_AREA',
     category:          ItemCategory.SHARED_FEATURE,
     label:             'Mat Area',
-    color:             0x7ABD7A,
-    meshSize:          [3.6, 0.1, 3.6],
+    color:             0x33691E,
     maxCapacity:       6,
+    maxQueueSize:      4,
     useDuration:       60,
     tier:              1,
     feePerSession:     5,
@@ -94,29 +103,29 @@ export const ITEM_TYPES = {
 
   // ── Utilities ─────────────────────────────────────────────────────────────
   WATER_DISPENSER: {
+    key:               'WATER_DISPENSER',
     category:          ItemCategory.UTILITY,
     label:             'Water Dispenser',
-    color:             0x87CEEB,
-    meshSize:          [0.5, 1.3, 0.5],
-    capacity:          20,             // uses before NEEDS_REFILL
+    color:             0x0288D1,
+    capacity:          20,
     refillDuration:    5,
   },
 
   SOAP_DISPENSER: {
+    key:               'SOAP_DISPENSER',
     category:          ItemCategory.UTILITY,
     label:             'Soap Dispenser',
-    color:             0xF0E68C,
-    meshSize:          [0.3, 0.6, 0.3],
+    color:             0xF9A825,
     capacity:          30,
     refillDuration:    3,
   },
 
-  // ── Towel Box (special dual-counter utility) ──────────────────────────────
+  // ── Towel Box ─────────────────────────────────────────────────────────────
   TOWEL_BOX: {
+    key:               'TOWEL_BOX',
     category:          ItemCategory.TOWEL_BOX,
     label:             'Towel Box',
     color:             0xFFF8DC,
-    meshSize:          [1.0, 0.8, 0.6],
-    capacity:          15,             // starting clean towel count
+    capacity:          15,
   },
 };

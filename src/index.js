@@ -1,16 +1,17 @@
-import * as THREE from 'three';
-import { Renderer }     from './core/Renderer.js';
-import { GameLoop }     from './core/GameLoop.js';
-import { InputManager } from './core/InputManager.js';
-import { UI }           from './ui/UI.js';
-import { GymRoom }      from './scene/GymRoom.js';
-import { ItemManager }  from './systems/ItemManager.js';
+import * as THREE           from 'three';
+import { Renderer }          from './core/Renderer.js';
+import { GameLoop }          from './core/GameLoop.js';
+import { InputManager }      from './core/InputManager.js';
+import { CameraController }  from './core/CameraController.js';
+import { UI }                from './ui/UI.js';
+import { GymRoom }           from './scene/GymRoom.js';
+import { ItemManager }       from './systems/ItemManager.js';
 
 const VIEW_SIZE = 10;
 
 async function main() {
   const renderer = new Renderer();
-  const input    = new InputManager();  // eslint-disable-line no-unused-vars
+  const input    = new InputManager();
   const ui       = new UI();
   await ui.init();
 
@@ -22,7 +23,7 @@ async function main() {
   const camera = new THREE.OrthographicCamera(
     -VIEW_SIZE * aspect, VIEW_SIZE * aspect,
     VIEW_SIZE, -VIEW_SIZE,
-    0.1, 200
+    0.1, 200,
   );
   camera.position.set(15, 15, 15);
   camera.lookAt(0, 0, 0);
@@ -39,22 +40,25 @@ async function main() {
   sun.shadow.camera.right  = sun.shadow.camera.top    =  20;
   scene.add(sun);
 
-  // Gym room — floor, walls, slot markers
+  // Gym room
   const room = new GymRoom(scene);
 
-  // Item system — create an item for every slot that has a typeKey
+  // Items
   const itemManager = new ItemManager(scene);
   for (const slot of room.slots) {
     if (!slot.typeKey) continue;
-    const item  = itemManager.createItem(slot.typeKey, slot);
-    slot.item   = item;
+    slot.item = itemManager.createItem(slot.typeKey, slot);
   }
+
+  // Camera controller — arrow keys pan in isometric space
+  const camCtrl = new CameraController(camera, input);
 
   const loop = new GameLoop(
     (delta) => {
+      camCtrl.update(delta);
       itemManager.update(delta);
     },
-    () => renderer.render(scene)
+    () => renderer.render(scene),
   );
   loop.start();
 }
