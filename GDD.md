@@ -227,9 +227,10 @@ Spawn at entrance
 
 ---
 
-## 13. Open Questions
+## 13. Design Decisions
 
-- [ ] Does the player have an energy/stamina bar, or can they run indefinitely?
-- [ ] Is there a day/night cycle that ends the workday, or is it endless?
-- [ ] Can machines be sold/removed, or only upgraded?
-- [ ] What is the failure state — bankruptcy, or just a soft "bad rating" system?
+- [x] **Stamina bar** — No. Player runs indefinitely.
+- [x] **Day/night cycle** — No cycle. Always daytime; the gym runs continuously.
+- [x] **Machine placement** — Predefined fixed slots per room. No drag-and-drop placement. Machines can be upgraded in-place or sold to free the slot.
+- [x] **Failure state** — No bankruptcy or hard failure. Customer satisfaction affects tips and rating only; player always earns money and continues playing.
+- [x] **Expansion model** — Unlocking a new room adds a new predefined area to manage (Monkey Mart style). Layout is designed to maximize player movement and urgency, not player customization.
