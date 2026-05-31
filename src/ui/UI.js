@@ -3,36 +3,26 @@ import * as PIXI from 'pixi.js';
 export class UI {
   constructor() {
     this.app = new PIXI.Application();
+    this.hud = null;
   }
 
   async init() {
     await this.app.init({
-      canvas: document.getElementById('ui-canvas'),
-      width: window.innerWidth,
-      height: window.innerHeight,
+      canvas:          document.getElementById('ui-canvas'),
+      width:           window.innerWidth,
+      height:          window.innerHeight,
       backgroundAlpha: 0,
-      antialias: true,
+      antialias:       true,
     });
 
-    this._buildHUD();
-    window.addEventListener('resize', () => this._onResize());
-  }
-
-  _buildHUD() {
     this.hud = new PIXI.Container();
     this.app.stage.addChild(this.hud);
 
-    // Example health label — replace with real UI later
-    this.healthLabel = new PIXI.Text({ text: 'HP: 100', style: { fill: 0xffffff, fontSize: 18 } });
-    this.healthLabel.position.set(16, 16);
-    this.hud.addChild(this.healthLabel);
+    window.addEventListener('resize', () => {
+      this.app.renderer.resize(window.innerWidth, window.innerHeight);
+    });
   }
 
-  setHealth(value) {
-    this.healthLabel.text = `HP: ${value}`;
-  }
-
-  _onResize() {
-    this.app.renderer.resize(window.innerWidth, window.innerHeight);
-  }
+  // HUD element builders will be added here as economy / game systems are implemented.
+  // e.g. addMoneyCounter(), addSatisfactionMeter(), addTaskNotification()
 }

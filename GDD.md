@@ -42,22 +42,25 @@ Customer enters gym
 ## 4. Player
 
 ### Character
-- Simple 3D humanoid, low-poly
-- Controlled by the player: click/tap a task → player walks to it and performs it
-- Has a single action queue (one task at a time)
+- Low-poly 3D humanoid — amber shirt for clear visual contrast against customers
+- **Desktop:** WASD free movement, isometric-projected (W/A/S/D map to screen up/left/down/right)
+- **Mobile:** virtual joystick (PixiJS overlay — post-MVP)
+- Player smoothly rotates to face movement direction
+- Task interaction: player walks near an item and clicks/taps it → `interact(actor)` is called
 
 ### Player Tasks
 | Task | Trigger | Time Cost | Consequence if Ignored |
 |---|---|---|---|
-| Fix machine | Machine shows warning icon | Medium | Machine breaks fully, customer refunded |
-| Clean bathroom | Dirt meter fills over time | Short | Customer satisfaction drops, some leave |
+| Fix machine | Machine shows NEEDS_REPAIR indicator | Medium | repairTimer expires → BROKEN, customer refunded |
+| Full repair | Machine is BROKEN | Long + costs $ | Machine stays unusable |
+| Refill utility | Utility shows NEEDS_REFILL | Short | Utility unusable until refilled |
 | Help customer | Customer shows "!" icon | Short | Customer leaves without paying, satisfaction penalty |
-| Restock supplies | Supply meter empty | Medium | Bathroom unusable |
 
 ### Player Movement
-- Click-to-move on the gym floor
-- Player auto-faces the target task
-- Walk animation (looped) while moving, idle otherwise
+- WASD movement, speed 6.5 u/s, clamped to room bounds
+- Smooth rotation lerp toward movement direction (14 rad/s, short-arc)
+- Walk animation: TODO (Three.js AnimationMixer — post-MVP)
+- Arrow keys pan the camera independently
 
 ---
 
@@ -341,3 +344,5 @@ Each area is a predefined room with fixed item slots. Areas are unlocked by spen
 - [x] **Item categories** — Two categories: **Machine** (IDLE → IN_USE → NEEDS_REPAIR → BROKEN) and **Utility** (AVAILABLE → NEEDS_REFILL). All item types are data-driven config objects in `itemTypes.js`; no new class needed per item type.
 - [x] **Towel system** — Dual-slot Towel Box (clean count + dirty count). Customer takes clean towel on entry, returns dirty on exit. Washing Machine cycles dirty → clean. Enabled by unlocking Laundry Area.
 - [x] **Workers** — Post-MVP. Four types: Personal Trainer, Laundry Worker, Cashier, Cleaning Worker. Each automates a specific player task type.
+- [x] **Player movement** — WASD free movement with isometric screen-space projection (W/A/S/D map to screen up/left/down/right, not raw world axes). Arrow keys pan the camera independently. No click-to-move.
+- [x] **Reference game** — Monkey Mart (Poki). Player is always in motion reacting to chaos. Layout and urgency are the core fun — not building/designing the gym.

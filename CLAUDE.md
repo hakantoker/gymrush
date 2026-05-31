@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**GymRush** — a browser-based 3D idle/management simulator. Players run a gym: fix machines, help customers, earn money, upgrade equipment. Full design spec in [GDD.md](GDD.md).
+**GymRush** — a browser-based 3D idle/management simulator (Monkey Mart style). Players run a gym: fix machines, help customers, earn money, upgrade equipment. Full design spec in [GDD.md](GDD.md). Current build status in [PROGRESS.md](PROGRESS.md).
 
 ## Commands
 
@@ -13,47 +13,97 @@ npm start       # dev server at localhost:3000 with HMR
 npm run build   # production build → dist/
 ```
 
-No test runner is configured yet.
+No test runner configured.
+
+## Directory structure
+
+```
+src/
+  core/           # Engine primitives (Renderer, GameLoop, InputManager, CameraController)
+  ui/             # PixiJS HUD layer (UI.js — transparent overlay over Three.js canvas)
+  scene/          # Static world geometry (GymRoom.js)
+  items/          # Item class hierarchy + type configs + mesh builders
+  systems/        # Cross-cutting managers (ItemManager.js)
+  player/         # Player entity and model builder
+  controls/       # Input abstraction (DesktopControls, MobileControls stub)
+```
 
 ## Architecture
 
-The engine is split into two rendering layers that share no canvas:
+Two rendering layers, two canvases, no shared state between them:
 
-- `#game-canvas` — Three.js `WebGLRenderer`. Handles the 3D scene (scene graph, camera, lights, meshes, animations).
-- `#ui-canvas` — PixiJS `Application`. Transparent overlay sitting above the Three.js canvas (`pointer-events: none` by default). Handles all 2D HUD elements (money counter, day bar, satisfaction meter, tooltips, panels).
+- **`#game-canvas`** — Three.js `WebGLRenderer`. Owns the 3D scene, camera, lights, all meshes.
+- **`#ui-canvas`** — PixiJS `Application`, transparent, `pointer-events:none`, z-index 10. Owns all 2D HUD elements.
 
-Both canvases are initialized in [src/index.js](src/index.js) via `main()`, which wires up:
+`src/index.js` wires everything together. System init order: Renderer → InputManager → UI → Scene/Room → Items → Player → CameraController → GameLoop.
+
+### Core systems
 
 | Class | File | Role |
 |---|---|---|
-| `Renderer` | `src/core/Renderer.js` | Wraps `THREE.WebGLRenderer`; owns resize handling and calls `renderer.render(scene, camera)` |
-| `GameLoop` | `src/core/GameLoop.js` | `requestAnimationFrame` loop; calls `update(delta)` then `render()` each tick; delta capped at 50ms |
-| `InputManager` | `src/core/InputManager.js` | Tracks keyboard (`keys` map by `e.code`) and mouse (NDC coords + buttons) |
-| `UI` | `src/ui/UI.js` | Initializes PixiJS app; owns the `hud` Container; exposes methods to update HUD text |
+| `Renderer` | `core/Renderer.js` | Wraps `THREE.WebGLRenderer`; handles orthographic camera resize (left/right/top/bottom) |
+| `GameLoop` | `core/GameLoop.js` | `requestAnimationFrame`; calls `update(delta)` then `render()`; delta capped at 50ms |
+| `InputManager` | `core/InputManager.js` | Key state by `e.code`; mouse NDC coords + buttons |
+| `CameraController` | `core/CameraController.js` | Arrow-key isometric panning (9 u/s). Arrow keys are reserved — **not** bound to player movement |
 
-See [PROGRESS.md](PROGRESS.md) for current build status and what to work on next.
+### Camera
 
-### GymRoom layout details
-`src/scene/GymRoom.js` — 14×12 world units (7 cols × 6 rows, `CELL=2`). Entrance gap (3 units wide) in the front wall (z = +6, most visible from isometric camera). Exports `CELL`, `ROOM_W`, `ROOM_D`, `gridToWorld(col, row)` for use by other systems.
+`THREE.OrthographicCamera`, `VIEW_SIZE=13`, positioned at `(18, 18, 18)` looking at origin. Isometric 45° angle. In-game screen axes map to world as:
 
-Slot positions (col, row → world x, z):
-- treadmill_1 (1,4) → (-4, 3), treadmill_2 (3,4) → (0, 3)
-- bench_1 (1,2) → (-4, -1), bike_1 (3,2) → (0, -1), dumbbell_1 (5,2) → (4, -1)
-- bathroom (1,0) → (-4, -5), locker_1 (5,0) → (4, -5)
+| Screen | World XZ |
+|---|---|
+| Right (D / →) | `(+x, -z)` |
+| Left (A / ←) | `(-x, +z)` |
+| Up (W / ↑) | `(-x, -z)` |
+| Down (S / ↓) | `(+x, +z)` |
+
+### GymRoom
+
+`src/scene/GymRoom.js` — `CELL=2`, `COLS=10`, `ROWS=8` → **20×16 world units**.
+
+Floor uses a procedural `CanvasTexture` (128 px/cell, recessed rubber-tile look) with `texture.repeat.set(COLS, ROWS)` — exactly one tile per grid cell.
+
+Walls: height 1.5 (low, so isometric camera sees the full room). Entrance gap: 4 units in the front wall (z = +8).
+
+`gridToWorld(col, row, colSpan, rowSpan)` converts grid coords to world-space centre. Slots carry `gridCol`, `gridRow`, `gridColSpan`, `gridRowSpan`, `typeKey`, and `position`.
+
+### Item system
+
+All items are data-driven. Adding a new item type = one entry in `itemTypes.js`, no new class.
+
+```
+GymItem                     base: state, mesh (THREE.Group), interact(actor), update(delta)
+├── OccupiableItem          usingPeople[], maxCapacity, queue[], queuePositions[], startSession/endSession
+│   ├── Machine             wear-based break chance, repairTimer, NEEDS_REPAIR/BROKEN states
+│   └── SharedFeature       multi-customer areas (boxing ring, mat area)
+└── Utility                 stock/capacity, AVAILABLE/NEEDS_REFILL
+    └── TowelBox            dual cleanCount/dirtyCount, washComplete()
+```
+
+State tinting uses **emissive-only** (no material cloning). Each builder call creates fresh material instances so in-place emissive modification is safe.
+
+`ItemManager` (`systems/ItemManager.js`) — factory by `typeKey`, ticks all items, provides `getAvailable(category)` and `getByMeshId(itemId)` for raycasts.
+
+`meshBuilders.js` — composed `THREE.Group` models for TREADMILL, BENCH, BIKE, DUMBBELL_RACK. Every mesh in a group is tagged `userData.itemId` for raycast lookup.
+
+### Player
+
+`Player` (`player/Player.js`) — WASD movement, `SPEED=6.5` u/s, clamped to room bounds. Smooth rotation toward movement direction (`ROT_SPEED=14` rad/s, short-arc lerp). Low-poly humanoid model (amber shirt — distinct from customers).
+
+Controls abstraction: `getMovement() → {x, z}`. Current implementation: `DesktopControls` (WASD). Stub: `MobileControls` (joystick `setJoystick(x,z)` called by PixiJS UI — not yet wired).
 
 ## Key conventions
 
-- **State machines use explicit string or symbol enums** — no implicit boolean flags per entity.
-- **Three.js and PixiJS are strictly separated** — game logic lives in Three.js space; PixiJS only reads game state to render HUD, never writes to the scene.
-- **GSAP is used only for UI transitions** (popups, number fly-ups, panel slides). Three.js `AnimationMixer` handles character/model animations.
-- **Flat/toon shading only** — use `MeshToonMaterial` or `MeshPhongMaterial`. No textures for MVP.
-- **No drag-and-drop machine placement in MVP** — machines occupy fixed floor slots defined in the layout.
+- **Explicit string state enums** — no boolean flags per entity (`'IDLE'`, `'IN_USE'`, etc.)
+- **Three.js and PixiJS are strictly separated** — game logic in Three.js space; PixiJS only reads state to render HUD
+- **GSAP for UI transitions only** — `AnimationMixer` for character animations (not yet implemented)
+- **Flat/toon shading** — `MeshPhongMaterial`, no textures except the procedural floor `CanvasTexture`
+- **Fixed machine slots** — no drag-and-drop; slot positions defined in `GymRoom.SLOT_DEFS`
+- **Arrow keys = camera, WASD = player** — never overlap these bindings
 
 ## Webpack asset handling
 
-Webpack is pre-configured to emit assets to `dist/assets/`:
+Assets in `src/` import directly; Webpack emits to `dist/assets/`:
 - Images/SVG → `assets/textures/`
 - `.glb/.gltf/.fbx/.obj` → `assets/models/`
 - Audio → `assets/audio/`
-
-Import them directly in JS (`import model from './models/player.glb'`) and Webpack resolves the hashed URL.
