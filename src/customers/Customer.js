@@ -1,8 +1,9 @@
-import * as THREE            from 'three';
-import { buildCustomerModel } from './customerModel.js';
-import { ItemCategory }       from '../items/itemTypes.js';
-import { ROOM_D }             from '../scene/GymRoom.js';
-import { PROGRAMS }           from './trainingPrograms.js';
+import * as THREE             from 'three';
+import { buildCustomerModel }  from './customerModel.js';
+import { ItemCategory }        from '../items/itemTypes.js';
+import { ROOM_D }              from '../scene/GymRoom.js';
+import { pickDiscipline }      from './disciplines.js';
+import { pickProgram }         from './trainingPrograms.js';
 
 export const CState = Object.freeze({
   WALKING_TO_MACHINE:    'WALKING_TO_MACHINE',
@@ -40,11 +41,15 @@ export class Customer {
     this._economy  = economy;
     this._onDone   = onDone;
 
-    // Pick a random training program
-    this._program  = PROGRAMS[Math.floor(Math.random() * PROGRAMS.length)];
+    // Discipline (optional) → biases program selection
+    this._discipline = pickDiscipline();
+    this._program    = pickProgram(this._discipline);
 
-    // Build the wish list: Set of machine typeKeys this customer plans to use
+    // Wish list: Set of machine typeKeys scored against program goals
     this._wishList = this._buildWishList();
+
+    // Muscle group gains accumulated across all machines used this session
+    this._gainedGroups = {};
 
     this.satisfaction    = INITIAL_SAT;
     this._state          = null;
@@ -74,8 +79,9 @@ export class Customer {
 
   // ── Public ─────────────────────────────────────────────────────────────────
 
-  get state()       { return this._state; }
-  get programName() { return this._program.name; }
+  get state()          { return this._state; }
+  get programName()    { return this._program.name; }
+  get disciplineName() { return this._discipline?.name ?? 'Casual'; }
 
   update(delta) {
     // Patience countdown regardless of state (except exit walks)
@@ -208,13 +214,20 @@ export class Customer {
 
     if (this._sessionTimer > 0) return;
 
-    // Session complete — pay for this machine
+    // Session complete — record muscle group gains
+    for (const [group, value] of Object.entries(m.typeConfig.effects ?? {})) {
+      this._gainedGroups[group] = Math.min(5,
+        (this._gainedGroups[group] ?? 0) + value,
+      );
+    }
+
+    // Pay for this machine (tip scales with current satisfaction)
     const fee = m.typeConfig.feePerSession ?? 10;
     const tip = Math.round(fee * (this.satisfaction / INITIAL_SAT) * 0.2);
     this._economy.earn(fee + tip);
 
     m.endSession(this);
-    this._wishList.delete(this._targetTypeKey); // mark this type as done
+    this._wishList.delete(this._targetTypeKey);
     this._targetMachine = null;
     this._targetTypeKey = null;
 
@@ -286,38 +299,75 @@ export class Customer {
   }
 
   /**
-   * Build a wish list (Set of typeKeys) by matching machine effects
-   * against this program's target effects, then shuffling and capping.
+   * Score a machine type against this program's goals.
+   * score = Σ machineEffect[g] × programGoal[g]  for each muscle group g.
+   * Small random noise prevents all customers from picking identical lists.
+   */
+  _scoreMachineType(typeConfig) {
+    const goals = this._program.goals;
+    let score = 0;
+    for (const [group, value] of Object.entries(typeConfig.effects ?? {})) {
+      score += value * (goals[group] ?? 0);
+    }
+    return score + Math.random() * 2; // ±noise for variety
+  }
+
+  /**
+   * Build a wish list (Set of typeKeys) using score-based greedy selection.
+   * Scores each distinct machine type, sorts descending, takes top N.
+   * Falls back to all available machines if no type matches the program.
    */
   _buildWishList() {
     const [minCount, maxCount] = this._program.machineCount;
     const count = minCount + Math.floor(Math.random() * (maxCount - minCount + 1));
 
-    const matching = new Set();
+    // Collect one score per distinct machine typeKey
+    const scored = new Map(); // typeKey → score
     for (const item of this._items.all()) {
       if (item.typeConfig.category !== ItemCategory.MACHINE) continue;
-      const effects = item.typeConfig.effects ?? [];
-      if (effects.some(e => this._program.effects.includes(e))) {
-        matching.add(item.typeConfig.key);
-      }
+      const key = item.typeConfig.key;
+      if (!scored.has(key)) scored.set(key, this._scoreMachineType(item.typeConfig));
     }
 
-    // Fisher-Yates shuffle then slice
-    const arr = [...matching];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
+    // Sort descending; fall back to all types if nothing scored positively
+    const sorted = [...scored.entries()].sort((a, b) => b[1] - a[1]);
+    const positive = sorted.filter(([, s]) => s > 0);
+    const candidates = positive.length > 0 ? positive : sorted;
 
-    return new Set(arr.slice(0, Math.min(count, arr.length)));
+    return new Set(candidates.slice(0, Math.min(count, candidates.length)).map(([k]) => k));
+  }
+
+  /**
+   * Computes a satisfaction bonus (0–30) based on how well the machines used
+   * this session fulfilled the program's muscle group goals.
+   *
+   * fulfillment per group = min(gained[g], 5) / 5    (0–1)
+   * bonus = weighted avg of fulfillments × 30
+   */
+  _computeGoalBonus() {
+    const goals = this._program.goals;
+    let totalWeight = 0;
+    let achieved    = 0;
+    for (const [group, weight] of Object.entries(goals)) {
+      totalWeight += weight;
+      const gained      = Math.min(5, this._gainedGroups[group] ?? 0);
+      const fulfillment = gained / 5;
+      achieved += fulfillment * weight;
+    }
+    if (totalWeight === 0) return 0;
+    return (achieved / totalWeight) * 30;
   }
 
   _walkToExit() {
+    // Apply goal-completion satisfaction bonus before paying tips
+    const bonus = this._computeGoalBonus();
+    this.satisfaction = Math.min(100, this.satisfaction + bonus);
     this._targetPos.set((Math.random() * 2 - 1) * 1.6, 0, ROOM_D / 2 + 0.5);
     this._setState(CState.WALKING_TO_EXIT);
   }
 
   _leaveUnhappy() {
+    // No goal bonus — they're leaving early
     this._targetPos.set((Math.random() * 2 - 1) * 1.6, 0, ROOM_D / 2 + 0.5);
     this._setState(CState.LEAVING_UNHAPPY);
   }
