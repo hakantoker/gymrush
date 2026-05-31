@@ -6,8 +6,10 @@ import { CameraController }  from './core/CameraController.js';
 import { UI }                from './ui/UI.js';
 import { GymRoom }           from './scene/GymRoom.js';
 import { ItemManager }       from './systems/ItemManager.js';
+import { DesktopControls }   from './controls/DesktopControls.js';
+import { Player }            from './player/Player.js';
 
-const VIEW_SIZE = 13;   // larger view for the expanded 20×16 room
+const VIEW_SIZE = 13;
 
 async function main() {
   const renderer = new Renderer();
@@ -50,11 +52,16 @@ async function main() {
     slot.item = itemManager.createItem(slot.typeKey, slot);
   }
 
+  // Player — WASD moves the character, arrow keys pan the camera
+  const controls = new DesktopControls(input);
+  const player   = new Player(scene, controls);
+
   // Camera controller — arrow keys pan in isometric space
   const camCtrl = new CameraController(camera, input);
 
   const loop = new GameLoop(
     (delta) => {
+      player.update(delta);
       camCtrl.update(delta);
       itemManager.update(delta);
     },
