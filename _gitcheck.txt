@@ -1,0 +1,6 @@
+fc0a12a Update PROGRESS: mark Milestone 2 complete, set HUD/fly-ups as next task
+59b6f63 Cashier station: customers pay at counter before leaving
+2871203 Muscle group system: disciplines, training programs, scored machine selection
+=== STATUS ===
+?? _gitcheck.txt
+=== END ===
