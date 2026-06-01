@@ -10,6 +10,7 @@ import { Economy }            from './systems/Economy.js';
 import { DesktopControls }    from './controls/DesktopControls.js';
 import { Player }             from './player/Player.js';
 import { CustomerSpawner }    from './customers/CustomerSpawner.js';
+import { CashierStation }     from './cashier/CashierStation.js';
 
 const VIEW_SIZE = 13;
 
@@ -56,12 +57,15 @@ async function main() {
   const economy = new Economy(500);
   economy.on(({ total }) => ui.updateMoney(total));
 
+  // Cashier — customers pay here before leaving
+  const cashier = new CashierStation(scene);
+
   // Player
   const controls = new DesktopControls(input);
   const player   = new Player(scene, controls);
 
   // Customers
-  const spawner = new CustomerSpawner(scene, itemManager, economy);
+  const spawner = new CustomerSpawner(scene, itemManager, economy, cashier);
 
   // Camera panning — arrow keys
   const camCtrl = new CameraController(camera, input);

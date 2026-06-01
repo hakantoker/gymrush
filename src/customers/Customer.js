@@ -12,6 +12,9 @@ export const CState = Object.freeze({
   WALKING_TO_DISPENSER:  'WALKING_TO_DISPENSER',
   AT_DISPENSER:          'AT_DISPENSER',
   WAITING:               'WAITING',          // all wished machines busy — retry after delay
+  WALKING_TO_CASHIER:    'WALKING_TO_CASHIER',
+  IN_CASHIER_QUEUE:      'IN_CASHIER_QUEUE',
+  AT_CASHIER:            'AT_CASHIER',
   WALKING_TO_EXIT:       'WALKING_TO_EXIT',
   LEAVING_UNHAPPY:       'LEAVING_UNHAPPY',
 });
@@ -21,11 +24,13 @@ const ARRIVAL_DIST       = 0.35;
 const INITIAL_SAT        = 50;
 const PATIENCE           = 60;    // seconds before forced exit
 const DISPENSER_DURATION = 2;     // seconds at water dispenser
+const PAYMENT_DURATION   = 2.5;   // seconds being served at the cashier
 
 // Satisfaction drain rates (points/second) by state
 const SAT_DRAIN = {
-  [CState.WAITING]:   0.6,
-  [CState.IN_QUEUE]:  1.2,
+  [CState.WAITING]:          0.6,
+  [CState.IN_QUEUE]:         1.2,
+  [CState.IN_CASHIER_QUEUE]: 0.8,
 };
 
 export class Customer {
@@ -33,12 +38,14 @@ export class Customer {
    * @param {THREE.Scene}          scene
    * @param {ItemManager}          itemManager
    * @param {Economy}              economy
+   * @param {CashierStation}       cashier
    * @param {(c:Customer)=>void}   onDone
    */
-  constructor(scene, itemManager, economy, onDone) {
+  constructor(scene, itemManager, economy, cashier, onDone) {
     this._scene    = scene;
     this._items    = itemManager;
     this._economy  = economy;
+    this._cashier  = cashier;
     this._onDone   = onDone;
 
     // Discipline (optional) → biases program selection
@@ -60,7 +67,11 @@ export class Customer {
     this._sessionTimer   = 0;
     this._dispenserTimer = 0;
     this._waitTimer      = 0;
+    this._paymentTimer   = 0;
     this._patienceTimer  = PATIENCE;
+
+    // Fees accrue per machine used, then paid all at once at the cashier
+    this._accruedFee     = 0;
 
     // Spawn just inside the entrance gap with a small random x offset
     this.position = new THREE.Vector3(
@@ -84,9 +95,12 @@ export class Customer {
   get disciplineName() { return this._discipline?.name ?? 'Casual'; }
 
   update(delta) {
-    // Patience countdown regardless of state (except exit walks)
+    // Patience countdown — paused once being served or already leaving.
+    // Note: customers who give up while heading to / queuing at the cashier
+    // leave WITHOUT paying their accrued fee, so a slow line costs the gym.
     if (this._state !== CState.WALKING_TO_EXIT &&
-        this._state !== CState.LEAVING_UNHAPPY) {
+        this._state !== CState.LEAVING_UNHAPPY &&
+        this._state !== CState.AT_CASHIER) {
       this._patienceTimer -= delta;
       if (this._patienceTimer <= 0) {
         this._cleanup();
@@ -108,6 +122,9 @@ export class Customer {
       case CState.WALKING_TO_DISPENSER: this._tickWalkToDispenser(delta);break;
       case CState.AT_DISPENSER:         this._tickAtDispenser(delta);    break;
       case CState.WAITING:              this._tickWaiting(delta);        break;
+      case CState.WALKING_TO_CASHIER:   this._tickWalkToCashier(delta);  break;
+      case CState.IN_CASHIER_QUEUE:     this._tickInCashierQueue(delta); break;
+      case CState.AT_CASHIER:           this._tickAtCashier(delta);      break;
       case CState.WALKING_TO_EXIT:
       case CState.LEAVING_UNHAPPY:      this._tickWalkToExit(delta);     break;
     }
@@ -128,7 +145,7 @@ export class Customer {
       if (this._getInstances(key).length === 0) this._wishList.delete(key);
     }
 
-    if (this._wishList.size === 0) { this._walkToExit(); return; }
+    if (this._wishList.size === 0) { this._goToCashier(); return; }
 
     // Priority 1 — find a free machine for any wished type
     for (const typeKey of this._wishList) {
@@ -221,10 +238,8 @@ export class Customer {
       );
     }
 
-    // Pay for this machine (tip scales with current satisfaction)
-    const fee = m.typeConfig.feePerSession ?? 10;
-    const tip = Math.round(fee * (this.satisfaction / INITIAL_SAT) * 0.2);
-    this._economy.earn(fee + tip);
+    // Accrue the fee — actual payment happens later at the cashier
+    this._accruedFee += m.typeConfig.feePerSession ?? 10;
 
     m.endSession(this);
     this._wishList.delete(this._targetTypeKey);
@@ -253,6 +268,56 @@ export class Customer {
   _tickWaiting(delta) {
     this._waitTimer -= delta;
     if (this._waitTimer <= 0) this._decide();
+  }
+
+  _tickWalkToCashier(delta) {
+    if (!this._moveTo(this._targetPos, delta)) return;
+
+    // Claim the counter if free, otherwise take a spot in line
+    if (this._cashier.isAvailable()) {
+      this._cashier.startPayment(this);
+      this._paymentTimer = PAYMENT_DURATION;
+      this._setState(CState.AT_CASHIER);
+    } else {
+      const pos = this._cashier.enqueue(this);
+      if (pos) {
+        this._targetPos.copy(pos);
+        this._setState(CState.IN_CASHIER_QUEUE);
+      } else {
+        // Line is full — wait near the counter and retry shortly
+        this._waitTimer = 1.5;
+        this._setState(CState.WAITING);
+      }
+    }
+  }
+
+  _tickInCashierQueue(delta) {
+    this._moveTo(this._targetPos, delta);
+
+    // Advance to the counter once first in line and it frees up
+    if (this._cashier.isAvailable() && this._cashier.queue[0] === this) {
+      this._cashier.dequeue();
+      this._cashier.startPayment(this);
+      this._paymentTimer = PAYMENT_DURATION;
+      this._setState(CState.AT_CASHIER);
+    } else {
+      // Keep our queue target in sync as the line advances
+      const idx = this._cashier.queue.indexOf(this);
+      if (idx >= 0) this._targetPos.copy(this._cashier.queuePositions[idx]);
+    }
+  }
+
+  _tickAtCashier(delta) {
+    this._paymentTimer -= delta;
+    if (this._paymentTimer > 0) return;
+
+    // Final payment: accrued fees + tip scaled by final satisfaction
+    const tip   = Math.round(this._accruedFee * (this.satisfaction / INITIAL_SAT) * 0.3);
+    const total = this._accruedFee + tip;
+    if (total > 0) this._economy.earn(total);
+
+    this._cashier.endPayment();
+    this._walkToExit();
   }
 
   _tickWalkToExit(delta) {
@@ -358,10 +423,17 @@ export class Customer {
     return (achieved / totalWeight) * 30;
   }
 
-  _walkToExit() {
-    // Apply goal-completion satisfaction bonus before paying tips
+  /** Training done — apply goal bonus, then head to the cashier to pay. */
+  _goToCashier() {
+    // Goal-completion satisfaction bonus is locked in once training ends
     const bonus = this._computeGoalBonus();
     this.satisfaction = Math.min(100, this.satisfaction + bonus);
+
+    this._targetPos.copy(this._cashier.worldPosition);
+    this._setState(CState.WALKING_TO_CASHIER);
+  }
+
+  _walkToExit() {
     this._targetPos.set((Math.random() * 2 - 1) * 1.6, 0, ROOM_D / 2 + 0.5);
     this._setState(CState.WALKING_TO_EXIT);
   }
@@ -372,10 +444,13 @@ export class Customer {
     this._setState(CState.LEAVING_UNHAPPY);
   }
 
-  /** Clean up any active machine/queue claim before forcing an exit. */
+  /** Clean up any active machine / cashier queue claim before forcing an exit. */
   _cleanup() {
     if (this._targetMachine && this._state === CState.IN_QUEUE) {
       this._targetMachine.leaveQueue(this);
+    }
+    if (this._state === CState.IN_CASHIER_QUEUE) {
+      this._cashier.leaveQueue(this);
     }
     this._targetMachine = null;
     this._targetTypeKey = null;

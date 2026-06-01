@@ -4,10 +4,11 @@ const SPAWN_INTERVAL = 8;    // seconds between spawns
 const MAX_CUSTOMERS  = 8;    // concurrent customer cap
 
 export class CustomerSpawner {
-  constructor(scene, itemManager, economy) {
+  constructor(scene, itemManager, economy, cashier) {
     this._scene       = scene;
     this._items       = itemManager;
     this._economy     = economy;
+    this._cashier     = cashier;
     this._customers   = [];
     this._timer       = 2;   // short delay before first customer appears
   }
@@ -29,6 +30,7 @@ export class CustomerSpawner {
       this._scene,
       this._items,
       this._economy,
+      this._cashier,
       (c) => { this._customers = this._customers.filter(x => x !== c); },
     );
     this._customers.push(customer);
