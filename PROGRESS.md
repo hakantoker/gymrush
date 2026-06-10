@@ -1,12 +1,18 @@
 # GymRush — Build Progress
 
 ## Next task (resume here)
-**Satisfaction HUD meter + money fly-ups.** The data already exists — customers track `satisfaction` (starts 50) and pay accrued fee + satisfaction tip at the cashier. What's missing is *showing* it:
-- Satisfaction meter on the PixiJS HUD (top-right) — aggregate or per-active-customer indicator.
-- GSAP `+$X` money fly-up at the cashier on each payment (the economy already emits transactions).
-- Optional: floating "left without paying" indicator when an impatient customer abandons the cashier queue.
+**Player interaction — repair & restock.** The maintenance loop runs (machines wear and break, utilities deplete) but the player can't act on it yet. Add:
+- Raycast click (or proximity + key) to target a broken / NEEDS_REPAIR machine and run a repair timer.
+- Restock utilities (water dispenser, soap) the same way.
+- Player "busy" state + on-screen progress while repairing/restocking.
+- Tie into Economy (repair may cost money) once the action works.
 
-After that, the next gameplay gap is **player interaction** — clicking broken/needs-repair machines to fix them. Right now the maintenance loop runs but the player can't act on it. See "Up next" below.
+---
+
+## Milestone 3 — Satisfaction HUD + money fly-ups ✅
+- [x] Satisfaction meter (top-right PixiJS): averages active customers' `satisfaction`, red→amber→green, dims when gym empty (`UI.updateSatisfaction`, `CustomerSpawner.averageSatisfaction`)
+- [x] GSAP `+$N` fly-up at the cashier on each payment — `Economy.earn(amount, worldPosition)` carries the source point; `index.js` projects world→screen and calls `UI.showMoneyFlyup`
+- [x] World→screen projection helper in `index.js` for HUD overlays
 
 ---
 

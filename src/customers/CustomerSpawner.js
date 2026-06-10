@@ -15,6 +15,16 @@ export class CustomerSpawner {
 
   get activeCount() { return this._customers.length; }
 
+  /**
+   * Average satisfaction across all active customers (0–100), or null if the
+   * gym is empty. Drives the HUD satisfaction meter.
+   */
+  get averageSatisfaction() {
+    if (this._customers.length === 0) return null;
+    const sum = this._customers.reduce((acc, c) => acc + c.satisfaction, 0);
+    return sum / this._customers.length;
+  }
+
   update(delta) {
     this._timer -= delta;
     if (this._timer <= 0 && this._customers.length < MAX_CUSTOMERS) {

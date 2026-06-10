@@ -14,6 +14,17 @@ import { CashierStation }     from './cashier/CashierStation.js';
 
 const VIEW_SIZE = 13;
 
+/** Project a world-space point to 2D screen pixels for HUD overlays. */
+const _projV       = new THREE.Vector3();
+const _flyupAnchor = new THREE.Vector3();
+function worldToScreen(worldPos, camera) {
+  _projV.copy(worldPos).project(camera);
+  return {
+    x: (_projV.x * 0.5 + 0.5) * window.innerWidth,
+    y: (-_projV.y * 0.5 + 0.5) * window.innerHeight,
+  };
+}
+
 async function main() {
   const renderer = new Renderer();
   const input    = new InputManager();
@@ -55,7 +66,16 @@ async function main() {
 
   // Economy — wire to UI so money counter updates on every transaction
   const economy = new Economy(500);
-  economy.on(({ total }) => ui.updateMoney(total));
+  economy.on(({ type, amount, total, worldPosition }) => {
+    ui.updateMoney(total);
+    // Floating +$N popup at the point of income (e.g. cashier)
+    if (type === 'earn' && worldPosition) {
+      // Raise the anchor ~1.8u so the popup appears above the counter, not the floor
+      _flyupAnchor.copy(worldPosition).setY(worldPosition.y + 1.8);
+      const screen = worldToScreen(_flyupAnchor, camera);
+      ui.showMoneyFlyup(amount, screen.x, screen.y);
+    }
+  });
 
   // Cashier — customers pay here before leaving
   const cashier = new CashierStation(scene);
@@ -76,6 +96,7 @@ async function main() {
       spawner.update(delta);
       camCtrl.update(delta);
       itemManager.update(delta);
+      ui.updateSatisfaction(spawner.averageSatisfaction);
     },
     () => renderer.render(scene),
   );

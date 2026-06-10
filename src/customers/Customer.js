@@ -314,7 +314,7 @@ export class Customer {
     // Final payment: accrued fees + tip scaled by final satisfaction
     const tip   = Math.round(this._accruedFee * (this.satisfaction / INITIAL_SAT) * 0.3);
     const total = this._accruedFee + tip;
-    if (total > 0) this._economy.earn(total);
+    if (total > 0) this._economy.earn(total, this._cashier.worldPosition);
 
     this._cashier.endPayment();
     this._walkToExit();

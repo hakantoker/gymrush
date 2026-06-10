@@ -9,11 +9,15 @@ export class Economy {
     this._listeners  = [];
   }
 
-  /** Add money. Notifies listeners with { type:'earn', amount, total }. */
-  earn(amount) {
+  /**
+   * Add money. Notifies listeners with { type:'earn', amount, total, worldPosition }.
+   * @param {number}          amount
+   * @param {THREE.Vector3=}  worldPosition  optional source of the income (for fly-ups)
+   */
+  earn(amount, worldPosition = null) {
     this.money       += amount;
     this.totalEarned += amount;
-    this._emit({ type: 'earn', amount, total: this.money });
+    this._emit({ type: 'earn', amount, total: this.money, worldPosition });
   }
 
   /** Deduct money. Notifies listeners with { type:'spend', amount, total }. */
