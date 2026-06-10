@@ -457,3 +457,107 @@ Her alan sabit item slot'ları olan predefined bir odadır. Alanlar **iki kapıd
 - [x] **Personel maaşı** — Hire cost (tek seferlik) + salary (her gün sonu periyodik). Para yetmezse personel **küser/yavaşlar** (geçici grev, para gelince düzelir) — game-over yok. Detay: §7e.
 - [x] **Kasa = yönetim terminali** — Çift işlevli: müşteri ödeme noktası + planlama ekranı. Oyuncu planlama yaparken kasa meşgul (fırsat maliyeti). Kasiyer personeli alınınca menü her yerden açılır. Detay: §7d.
 - [x] **Kapsam dışı (şimdilik)** — Offline/AFK kazanç YOK (aktif yönetim). Prestige/franchise reset YOK. Kilitli slot'ların hayalet/önizleme görünümü ilk aşamada YOK (görsel test sonrası tekrar değerlendirilecek).
+
+---
+
+## 14. Denge Tablosu (Başlangıç Değerleri)
+
+> **ÖNEMLİ:** Bu sayılar **test başlangıç noktasıdır**, nihai değildir. Tümü tek bir config dosyasında (`src/config/balance.js`) toplanacak ve oyun içinde oynayarak ayarlanacaktır. Görsel öğeler (zemin boyutu, slot yerleşimi) bu sayılardan türetilir — bu yüzden **tek doğruluk kaynağı config dosyasıdır**; bu tablo onun insan-okunur kopyasıdır. Sayı değişince ikisi de güncellenmelidir.
+
+### 14.1 Zaman & ritim
+| Parametre | Değer |
+|---|---|
+| `time.dayDuration` | 90 sn |
+| `time.startMoney` | 500 |
+
+### 14.2 Slot kapasiteleri (level başına makine tavanı)
+
+Yeni slot'lar **boş** gelir. Bu tablo aynı zamanda alanların hangi level'da açıldığını kodlar (Boxing/Plates L3'te belirir). Zemin boyutu ve yerleşim bu tablodan türetilir.
+
+| Makine | L1 | L2 | L3 | L4 | L5 |
+|---|---|---|---|---|---|
+| Treadmill | 2 | 4 | 5 | 6 | 8 |
+| Bike | 2 | 3 | 4 | 5 | 6 |
+| Bench | 1 | 3 | 4 | 5 | 6 |
+| Dumbbell Rack | 1 | 2 | 3 | 3 | 4 |
+| Pull-up Bar | 1 | 2 | 2 | 3 | 4 |
+| Boxing (shared) | 0 | 0 | 1 | 1 | 2 |
+| Plates/Mat (shared) | 0 | 0 | 1 | 2 | 2 |
+| **Toplam** | **7** | **14** | **20** | **25** | **32** |
+
+### 14.3 Gym Level maliyetleri (renovasyon kapıları)
+| Geçiş | Maliyet |
+|---|---|
+| L1 → L2 | $2,000 |
+| L2 → L3 | $8,000 |
+| L3 → L4 | $25,000 |
+| L4 → L5 | $75,000 |
+
+**Tempo referansı:** L1'de ~3★, 7 makine → ~$35/müşteri, steady-state ~5.7 sn/müşteri → ~$370/gün brüt. L1→L2 ≈ **6 gün** (~9 dk gerçek zaman). Onaylanan tempo.
+
+### 14.4 Makine ekonomisi (Tier 1 taban)
+| Makine | Alış (T1) | Fee T1 | Süre |
+|---|---|---|---|
+| Treadmill | $300 | $10 | 18 sn |
+| Bike | $200 | $8 | 14 sn |
+| Bench | $250 | $12 | 22 sn |
+| Dumbbell Rack | $150 | $6 | 14 sn |
+| Pull-up Bar | $100 | $5 | 12 sn |
+
+**Tier çarpanları (tüm makineler ortak):**
+| Tier | Fee çarpanı | Yükseltme maliyeti |
+|---|---|---|
+| T1 | ×1 | — (başlangıç) |
+| T2 | ×2.2 | alış × 4 |
+| T3 | ×4 | alış × 10 |
+
+### 14.5 Soyunma Odası (Locker Room) yükseltmeleri
+| Geçiş | Maliyet | Açtığı |
+|---|---|---|
+| L1 → L2 | $800 | Havlu sistemi, daha çok su kapasitesi |
+| L2 → L3 | $3,000 | Duşlar / banyo alanı |
+
+### 14.6 Personel (hire + günlük maaş)
+| Personel | Hire | Maaş/gün | Açılış Level |
+|---|---|---|---|
+| Cashier | $1,500 | $80 | L2 |
+| Cleaner | $1,200 | $60 | L2 |
+| Personal Trainer | $4,000 | $150 | L3 |
+| Laundry Worker | $2,500 | $100 | L4 |
+
+### 14.7 Rating formülü
+| Parametre | Değer / Formül |
+|---|---|
+| Pencere | Son 50 müşterinin final memnuniyeti (0–100), kayan ortalama |
+| VIP ağırlığı | ×3 (bir VIP, 3 normal müşteri kadar etkiler) |
+| Yıldız haritası | `stars = 1 + 4 × (avgSat / 100)`, sonra level tavanına clamp |
+| Level tavanı (maxStars) | L1–L2 → 4.0 · L3–L4 → 4.5 · L5 → 5.0 |
+
+### 14.8 VIP / Influencer
+| Parametre | Değer / Formül |
+|---|---|
+| `vip.baseChance` | `clamp(0, 0.05 + (rating − 3) × 0.10)` → 3★:%5, 5★:%25, düşük rating:~0 |
+| Fee / bahşiş çarpanı | ×3 |
+| Sabır çarpanı | ×0.5 (normalin yarısı) |
+
+### 14.9 Müşteri akışı
+| Parametre | Değer / Formül |
+|---|---|
+| Spawn çarpanı | `spawnRateMult = 0.5 + rating × 0.3` |
+| Spawn aralığı | `8 sn / spawnRateMult` → 1★:10sn · 3★:~5.7sn · 5★:4sn |
+| Max eşzamanlı müşteri | L1:8 · L2:14 · L3:20 · L4:28 · L5:36 |
+
+### 14.10 Hedeflenen config yapısı
+```
+src/config/balance.js
+├── time      { dayDuration, startMoney }
+├── slots     { [level]: { treadmill, bike, bench, dumbbell, pullup, boxing, plates } }
+├── gymLevel  { upgradeCosts: [2000, 8000, 25000, 75000], maxStars: [4, 4, 4.5, 4.5, 5] }
+├── machines  { treadmill: { buy, feeT1, duration }, ... }
+├── tiers     { feeMult: [1, 2.2, 4], upgradeMult: [null, 4, 10] }
+├── lockerRoom{ upgradeCosts: [800, 3000] }
+├── staff     { cashier: { hire, salary, unlockLevel }, ... }
+├── rating    { windowSize: 50, vipWeight: 3, maxStars: [...] }
+├── vip       { baseChance, ratingScale, feeMult, patienceMult }
+└── customers { baseSpawn: 8, spawnRatingScale: 0.3, maxConcurrent: [8, 14, 20, 28, 36] }
+```
