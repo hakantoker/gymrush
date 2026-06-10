@@ -1,11 +1,32 @@
 # GymRush — Build İlerlemesi
 
 ## Sıradaki task (buradan devam et)
-**Oyuncu etkileşimi — tamir & stok yenileme.** Bakım döngüsü çalışıyor (makineler aşınıp bozuluyor, utility'ler tükeniyor) ama oyuncu henüz müdahale edemiyor. Eklenecekler:
-- Bozuk / NEEDS_REPAIR durumundaki bir makineyi hedeflemek için raycast tıklama (veya yakınlık + tuş) ve tamir timer'ı.
-- Utility'leri (su sebili, sabun) aynı şekilde yeniden stoklamak.
-- Tamir/stok sırasında oyuncu "busy" durumu + ekranda ilerleme göstergesi.
-- Aksiyon çalıştıktan sonra Economy'ye bağlama (tamir para götürebilir).
+**Config altyapısı + Gym Level/Slot sistemi.** Bu oturumda büyük bir tasarım genişlemesi yapıldı (bkz. GDD §3a, §6, §7b–§7e, §14). Artık koda geçişin doğal ilk adımı, tüm denge sayılarını tek kaynağa toplamak ve gym level/slot iskeletini kurmak — neredeyse her sistem buna dayanıyor:
+- `src/config/balance.js` oluştur — GDD §14'teki TÜM sayıları buraya taşı (zaman, slot kapasiteleri, gym level maliyetleri, makine ekonomisi, tier çarpanları, locker room, personel, rating, vip, müşteri akışı). **GDD §14, balance.js'in insan-okunur kopyasıdır; tek doğruluk kaynağı config.**
+- Mevcut hard-coded değerleri (START_MONEY=500, fee'ler, SPAWN_INTERVAL=8, useDuration'lar) config'ten okuyacak şekilde refactor et.
+- Gym Level state'i (1–5) + slot kapasitesi level'a bağlı; yeni slot'lar **boş** gelir.
+- Görsel öğeler (zemin boyutu, slot yerleşimi) config slot tablosundan türetilmeli.
+
+**Daha sonra (bu tasarımın diğer parçaları):** Rating sistemi (§7b), gün sayacı (§3a), VIP müşteriler (§6), yönetim terminali UI (§7d), personel (§7e). Eski bekleyen task **oyuncu etkileşimi (tamir & stok)** hâlâ geçerli ama artık config/level sisteminden sonra gelmeli.
+
+---
+
+## Tasarım fazı — İlerleme & ekonomi sistemi (GDD'ye işlendi) ✅
+
+Bu oturumda kod yazmadan büyük bir tasarım turu yapıldı. Tüm kararlar GDD'ye işlendi:
+- **§3a Soyut gün sayacı** — ≈90 sn muhasebe birimi, ışık değişmez, oyun durmaz, gün sonu toast
+- **§6 VIP/Influencer** — rating'e bağlı, görsel belirtilir, 3 yöne çarpan (bahşiş + rating + düşük sabır)
+- **§7 Ekonomi** — iki katmanlı ilerleme: Gym Level (renovasyon) vs level-içi satın almalar
+- **§7b Rating (1–5 yıldız)** — yavaş/sönümlü, davranışsal, level'dan bağımsız; trafik + VIP olasılığı + bonus
+- **§7c Gym Level 1–5** — sadece para, iki kapılı açılım (level → satın alınabilir → para ile inşa)
+- **§7d Kasa = yönetim terminali** — planlama yaparken kasa meşgul (fırsat maliyeti)
+- **§7e Worker'lar** — hire + maaş; para yetmezse grev; game-over yok
+- **§14 Denge Tablosu** — TÜM somut başlangıç sayıları (test değerleri, config-driven olacak)
+
+## Araçlar (bu oturumda eklendi)
+- **graphify** — global kurulu (uv tool). Knowledge graph ile token tasarrufu. `graphify-out/` git-ignore'da. AST modunda çalışır (LLM/API key yok). Güncelleme: `graphify update .`. Sorgu: `graphify query "..."`.
+- **44 proje skill'i** — `.claude/skills/` altında, repo'ya commit'li: GSAP (8, resmi), PixiJS v8 (26, resmi), Three.js (10, CloudAI-X). Doğru API kalıpları için referans.
+- **Docs Türkçeye çevrildi** — CLAUDE.md, PROGRESS.md, GDD.md (teknik terimler İngilizce). CLAUDE.md'ye 4 çalışma kuralı eklendi.
 
 ---
 
