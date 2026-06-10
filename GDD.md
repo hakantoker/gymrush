@@ -39,6 +39,24 @@ Müşteri spor salonuna girer
 
 ---
 
+## 3a. Gün Sayacı & Ritim
+
+Oyunun bir **soyut gün sayacı** vardır. Bu *atmosferik* bir day/night döngüsü **değildir** — ışık, gökyüzü ve sahne her zaman aynı kalır (bkz. §13). Gün yalnızca bir **muhasebe/ritim birimidir**: oyunun olaylarını düzenli aralıklarla tek bir "nefes anına" toplar.
+
+- **Gün uzunluğu:** ≈ 90 saniye gerçek zaman (ayarlanabilir sabit; oynayarak ince ayar yapılır)
+- **UI:** Üst-ortada gün sayısı + ince ilerleme çubuğu (bkz. §9)
+- **Oyun durmaz:** Gün sonunda müşteriler akmaya devam eder, oyun donmaz — telaş kesilmez.
+
+**Gün sonunda olanlar:**
+- Personel maaşları kesilir (bkz. §7e)
+- Rating o günkü performansa göre güncellenir (yavaş/sönümlü — bkz. §7b)
+- Köşede kısa bir toast geçer: `Gün 4: +$320, ⭐4.2`
+- Detaylı tam-ekran özet **opsiyoneldir** (oyuncu isterse açar; oyunu durdurmaz)
+
+Bu yapı; maaş, rating ve ödül anını dağıtmak yerine düzenli bir kalbe bağlar, böylece oyuncuya doğal bir "dur ve planla" molası verir — ama oyunu durdurmadan.
+
+---
+
 ## 4. Oyuncu
 
 ### Karakter
@@ -195,6 +213,17 @@ Girişte spawn
 - Memnuniyet şunlarda azalır: bozuk makine, uzun bekleme, kirli tuvalet, ihmal edilen sorun
 - Memnuniyet şunlarda artar: oyuncunun hızlı tepkisi, Tier 2/3 makineler, temiz tesis
 
+### VIP / Influencer Müşteriler (yüksek risk / yüksek getiri)
+
+VIP/Influencer, oyunun **kalite ödülüdür** — parayla "satın alınamaz", hak edilir. Gelme olasılığı **Rating'e bağlıdır** (gym level'a değil — bkz. §7b). Yüksek rating'li küçük bir salon, VIP-yoğun trafikle hızlı para basabilir; bu, salt büyümeye alternatif gerçek bir stratejidir.
+
+- **Görsel olarak belli edilir** — oyuncu VIP'i tanır ve ona ekstra özen gösterir.
+- **Çarpan üç yere etki eder:**
+  1. **Bahşiş / ödeme** — çok yüksek çarpan
+  2. **Rating'e katkı** — mutlu bir VIP yıldızı normalden çok artırır (pozitif geri besleme: iyi salon → VIP → daha iyi rating → daha çok VIP)
+  3. **Sabır** — VIP **sabırsızdır**; mutlu etmesi zor ama ödülü büyük
+- **Net sonuç:** VIP geldiğinde oyuncu için ani bir "her şeyi bırak, bunu memnun et" anı oluşur.
+
 ---
 
 ## 7. Ekonomi
@@ -204,41 +233,106 @@ Girişte spawn
 |---|---|
 | Makine kullanım ücreti | Tier başına session başına sabit |
 | Müşteri bahşişi | Memnuniyete göre değişken (ücretin %0–30'u) |
-| VIP müşteri bonusu | Nadir sabit bonus |
+| VIP/Influencer çarpanı | Bahşiş/ödemede yüksek çarpan (bkz. §6) |
+| Rating bonusu | Yüksek rating tüm ödemelere bonus uygular (bkz. §7b) |
 
 ### Giderler / Maliyetler
 | Item | Maliyet Tipi |
 |---|---|
-| Yeni makine al | Tek seferlik |
+| Yeni makine al (boş slot'a) | Tek seferlik |
 | Makineyi bir sonraki tier'a yükselt | Tek seferlik (modeli değiştirir) |
+| Soyunma odası yükselt | Tek seferlik |
+| Yeni alan inşa et (level açtıysa) | Tek seferlik |
+| Personel kirala (hire cost) | Tek seferlik |
+| Personel maaşı (salary) | Periyodik (her gün sonu — bkz. §7e) |
 | Tuvalet malzemelerini yenile | Tekrarlayan |
 | Tamamen bozuk makineyi onar | Tek seferlik ceza maliyeti |
+| Gym Level yükseltme (renovasyon) | Tek seferlik, büyük (bkz. §7c) |
 
-### İlerleme Kilometre Taşları (Taslak)
+### İki Katmanlı İlerleme
 
-| Kilometre Taşı | Açılış |
-|---|---|
-| Gün 1 | 2 Treadmill (Tier 1), 1 Bench (Tier 1) |
-| $500 kazanıldı | Shower Stall slot'u açılır |
-| $1,200 kazanıldı | İlk Tier 2 upgrade açılır |
-| $3,000 kazanıldı | İkinci salon odası / genişleme alanı |
-| $7,500 kazanıldı | Tier 3 makineler kullanılabilir |
-| $15,000 kazanıldı | NPC yardımcı kirala (tuvaleti otomatik temizler) |
+Para iki ayrı eksende harcanır:
+
+- **Katman A — Gym Level (renovasyon):** Büyük, pahalı, nadir dönüm noktası. Zemini büyütür ve yeni slot'ları/alanları **satın alınabilir** yapar. Detay: §7c.
+- **Katman B — Level-içi satın almalar:** Sık, serbest, planlama burada yaşar — makine al/yükselt, soyunma odası yükselt, personel al, alan inşa et. Para her şeye yetmez → **önceliklendirme oyunun kalbidir**.
+
+Gym level yükseltme **sadece para** ile tetiklenir (yüksek bir eşik). Açık bir koşul yoktur; oyun, doğal akışta kazanç hızını artırarak oyuncuyu kendiliğinden yükseltmeye yönlendirir.
 
 ---
 
-## 7a. Worker'lar
+## 7b. Rating (1–5 Yıldız)
 
-Oyuncular task'ları otomatikleştirmek için NPC worker'lar kiralayabilir. Worker'lar kendi hareket ve aksiyon döngüleri olan kalıcı NPC'lerdir — oyuncu kontrollü değildirler.
+Rating, oyunun **kalite eksenidir** ve **gym level'dan bağımsızdır**. Bir salonun ne kadar büyük değil, ne kadar **iyi işletildiğini** ölçer.
+
+### Davranış
+- **Yavaş / sönümlü:** Son ~50 müşterinin performansının kayan ortalaması gibi davranır. Birkaç kötü an yıldızı düşürmez — uzun vadeli itibar gibi hisseder. Gün sonunda güncellenir (bkz. §3a).
+
+### Girdiler (çoğunlukla davranışsal)
+- Müşteri memnuniyeti (ana girdi)
+- Makine çeşitliliği ve tier'ları
+- Tesis temizliği (bozuk makine / kirli tuvalet rating'i düşürür)
+- VIP memnuniyeti (orantısız pozitif katkı — bkz. §6)
+- **Gym level yalnızca tavanı yükseltir:** 5. yıldıza ancak yüksek gym level'da ulaşılabilir; ama "iyi işletmek" her zaman ana belirleyicidir.
+
+### Etkiler
+1. **Müşteri gelme hızı** — yüksek rating = daha çok müşteri
+2. **Gelen müşterinin VIP/Influencer olma olasılığı** — yüksek rating = her gelen müşterinin VIP olma şansı artar
+3. **Ödeme bonusu** — yüksek rating tüm ödemelere bonus çarpanı uygular
+
+Sonuç: rating, salt para-kovalamacasına gerçek bir alternatif strateji sunar. Kaliteli küçük bir salon, az ama VIP-yoğun trafikle "dev ama vasat" bir salondan daha kârlı olabilir.
+
+---
+
+## 7c. Gym Level (1–5) — Renovasyon
+
+Oyuncu Level 1'de başlar. Her gym level **büyük bir renovasyondur**: zemini büyütür, slot kapasitesini artırır ve yeni alan türlerini **satın alınabilir** yapar. Yalnızca para ile tetiklenir (yüksek eşik).
+
+### İki kapılı açılım
+Bir alan/slot kullanılabilir hale gelmek için iki kapıdan geçer:
+1. **Gym Level** onu **satın alınabilir** yapar (availability)
+2. Oyuncu **ayrıca para verip** onu inşa eder / makineyi alır (build)
+
+Yeni slot'lar her zaman **boş** gelir (otomatik dolmaz) — planlama korunur.
+
+### Beş Level (taslak içerik)
+
+| Level | Tema | Yeni Açılanlar |
+|---|---|---|
+| 1 | Garaj / bodrum salonu | Küçük zemin, ~7 makine slot'u (örn. 2 treadmill, 1 bike, 1 bench, 1 dumbbell + 2), Soyunma Odası L1 (su sebili), Kasa. Müşteri: yalnızca Casual. Her şeyi oyuncu yapar → telaş + tutorial. |
+| 2 | Mahalle salonu | Zemin genişler (~14 slot), daha çok çeşit, Soyunma Odası L2 (havlu sistemi), **personel alma açılır** (Cashier + Cleaning Worker) → idle başlar, ilk Tier-2 makine yükseltmeleri. Müşteri: Regular. |
+| 3 | Fitness merkezi | **Yeni alan türleri açılabilir:** Plates/serbest ağırlık alanı + Boks alanı (çok kişilik shared feature), Soyunma Odası L3 (duşlar → banyo), Personal Trainer personeli. Müşteri: Bodybuilder. |
+| 4 | Premium kulüp | Sauna, grup ders stüdyosu (zamanlı toplu seans), smoothie/supplement standı (yeni gelir), Tier-3 makineler, Çamaşırhane (tam havlu döngüsü). Müşteri: Influencer/VIP yoğunlaşır. |
+| 5 | Mega kompleks | Havuz/spa, büyük genişleme, tam otomasyon mümkün (tüm personel) → ağırlıklı idle, prestij müşteriler ve çok büyük ödemeler. |
+
+### Slot kapasitesi örneği
+Aynı makine tipinin slot tavanı level ile artar — örn. Treadmill: L1'de 2 → L2'de 4 → … Yeni slot'lar boş gelir, oyuncu doldurmaya karar verir.
+
+---
+
+## 7d. Kasa = Yönetim Terminali
+
+Kasa **çift işlevlidir:**
+1. **Ödeme noktası** — müşteriler çıkarken burada öder (mevcut sistem).
+2. **Yönetim terminali** — oyuncu kasaya gidince bir bilgisayar ekranı açılır; tüm satın almalar (makine, yükseltme, personel, alan, gym level) buradan yapılır.
+
+**Tasarım gerilimi:** Oyuncu kasada planlama yaparken kasa meşguldür → o sırada müşteri ödeme alınamaz. Planlamanın gerçek bir **fırsat maliyeti** vardır; bu, erken oyunu "meşgul" tutar.
+
+**Kasiyer personeli alındıktan sonra**, yönetim menüsü her yerden açılabilir hale gelir (kasaya bağımlılık kalkar) — bu, bir personel ödülüdür.
+
+---
+
+## 7e. Worker'lar
+
+Oyuncular task'ları otomatikleştirmek için NPC worker'lar kiralayabilir. Worker'lar kendi hareket ve aksiyon döngüleri olan kalıcı NPC'lerdir — oyuncu kontrollü değildirler. **Personel, idle'a geçiş anahtarıdır:** telaşı azaltır ama **bitirmez** — sadece telaş/planlama arası denge kayar (bkz. §7d, kasiyer alınınca menü her yerden açılır).
 
 ### Worker Tipleri
 
-| Worker | Otomatikleştirir | Kiralama Maliyeti | Maaş |
-|---|---|---|---|
-| Personal Trainer | Zorda kalan müşterilere yardım eder (oyuncunun "!" tepkisini değiştirir) | Yüksek | Orta |
-| Laundry Worker | Çamaşır makinesini yükler, havlu kutusunu doldurur | Orta | Düşük |
-| Cashier | Çıkışta müşteri ödemesini hızlandırır | Orta | Düşük |
-| Cleaning Worker | Tuvaleti temizler, kullanım sonrası makineleri siler | Düşük | Düşük |
+| Worker | Otomatikleştirir | Kiralama Maliyeti | Maaş | Açılış |
+|---|---|---|---|---|
+| Cashier | Çıkışta müşteri ödemesini hızlandırır; yönetim menüsünü her yerden açar | Orta | Düşük | Level 2 |
+| Cleaning Worker | Tuvaleti temizler, kullanım sonrası makineleri siler | Düşük | Düşük | Level 2 |
+| Personal Trainer | Zorda kalan müşterilere yardım eder (oyuncunun "!" tepkisini değiştirir) | Yüksek | Orta | Level 3 |
+| Laundry Worker | Çamaşır makinesini yükler, havlu kutusunu doldurur | Orta | Düşük | Level 4 (Çamaşırhane ile) |
 
 ### Worker Davranışı
 - Her worker'ın bir **task öncelik listesi** vardır — kendi task tipini tarar ve ona yürür
@@ -246,14 +340,16 @@ Oyuncular task'ları otomatikleştirmek için NPC worker'lar kiralayabilir. Work
 - Worker'lar birbirinden ve oyuncudan bağımsızdır
 - Oyuncu bir worker'ı istediği zaman kovabilir
 
-### Açılış Koşulu
-Worker'lar belirli bir kilometre taşından sonra kiralanabilir hale gelir (TBD — ilerleme ekonomisine bağlı).
+### Maaş Mekaniği
+- **Hire cost** (tek seferlik) + **salary** (periyodik). Maaş her **gün sonunda** otomatik kesilir (bkz. §3a).
+- **Para maaşa yetmezse:** Personel **küser / işi yavaşlatır** (geçici "grev" gibi). Para gelince kendiliğinden düzelir.
+- **Game-over yoktur** (§13: failure state yok). Maaş yetersizliği sert bir ceza değil, yumuşak bir baskıdır — telaşı canlı tutar.
 
 ---
 
 ## 8. Alanlar & Yerleşim
 
-Her alan sabit item slot'ları olan predefined bir odadır. Alanlar para harcanarak açılır ve sahnede mevcut odaların yanında belirir.
+Her alan sabit item slot'ları olan predefined bir odadır. Alanlar **iki kapıdan** açılır: önce gym level onları satın alınabilir yapar, sonra oyuncu para verip inşa eder (bkz. §7c). Açılan alanlar sahnede mevcut odaların yanında belirir.
 
 ### Alan Listesi
 
@@ -289,13 +385,16 @@ Her alan sabit item slot'ları olan predefined bir odadır. Alanlar para harcana
 
 | Eleman | Konum | Notlar |
 |---|---|---|
-| Para sayacı | Sol üst | Kazançta animasyonlu +$X |
-| Gün / zaman barı | Üst orta | Gün döngüsü müşteri spawn oranını yönetir |
-| Memnuniyet barı | Sağ üst | Son müşterilerin ortalaması |
+| Para sayacı | Sol üst | Kazançta animasyonlu +$X (uygulandı) |
+| Gün sayacı + ilerleme çubuğu | Üst orta | Soyut gün birimi (≈90 sn); ışık değişmez (bkz. §3a) |
+| Rating (yıldız) göstergesi | Sol üst / para altı | 1–5 yıldız, yavaş/sönümlü (bkz. §7b) |
+| Memnuniyet barı | Sağ üst | Aktif müşterilerin ortalaması (uygulandı) |
+| Gün sonu toast'ı | Köşe | `Gün N: +$X, ⭐Y.Z` — oyunu durdurmaz (bkz. §3a) |
 | Task bildirimi | Oyuncunun üstünde | Acil task'a işaret eden ok + ikon |
+| VIP göstergesi | Müşteri üstünde | VIP/Influencer müşteriyi görsel olarak belli eder (bkz. §6) |
 | Makine tooltip'i | Hover'da | Tier, ücret, durum gösterir |
-| Upgrade paneli | Alt çekmece | Idle makineye tıklayınca açılır |
-| Gün sonu özeti | Tam ekran overlay | Gelir, bahşişler, olaylar, gün puanı |
+| Yönetim terminali | Kasa ekranı / tam panel | Tüm satın almalar (makine, yükseltme, personel, alan, gym level) buradan (bkz. §7d) |
+| Gün sonu özeti | Tam ekran overlay (opsiyonel) | Gelir, bahşişler, olaylar, gün puanı |
 
 ---
 
@@ -328,7 +427,10 @@ Her alan sabit item slot'ları olan predefined bir odadır. Alanlar para harcana
 - Çoklu salon katı (dikey genişleme)
 - Çok oyunculu / liderlik tablosu
 - Ses tasarımı (yalnızca placeholder)
-- Worker'lar (post-MVP — ilerleme kilometre taşlarıyla açılır)
+- **Offline / AFK kazanç** — yok; oyun aktif yönetim üzerine kurulu
+- **Prestige / franchise reset** — şimdilik düşünülmüyor
+- **Kilitli slot'ların hayalet/önizleme görünümü** — ilk aşamada yok (görsel test sonrası tekrar değerlendirilecek)
+- Worker'lar (Level 2+ açılır — bkz. §7e; ilk MVP'de oyuncu tüm task'ları kendi yapar)
 
 ---
 
@@ -346,3 +448,12 @@ Her alan sabit item slot'ları olan predefined bir odadır. Alanlar para harcana
 - [x] **Worker'lar** — Post-MVP. Dört tip: Personal Trainer, Laundry Worker, Cashier, Cleaning Worker. Her biri belirli bir oyuncu task tipini otomatikleştirir.
 - [x] **Oyuncu hareketi** — İzometrik ekran-uzayı projeksiyonlu WASD serbest hareket (W/A/S/D ham dünya eksenlerine değil ekran yukarı/sol/aşağı/sağ'a eşlenir). Ok tuşları kamerayı bağımsız kaydırır. Click-to-move yok.
 - [x] **Referans oyun** — Monkey Mart (Poki). Oyuncu kaosa tepki vererek sürekli hareket halindedir. Yerleşim ve aciliyet çekirdek eğlencedir — salon kurmak/tasarlamak değil.
+- [x] **İki katmanlı ilerleme** — Katman A: **Gym Level** (1–5, büyük renovasyon, sadece para, nadir). Katman B: level-içi satın almalar (makine/yükseltme/personel/alan — sık, planlama burada). Detay: §7c.
+- [x] **Gym Level tetikleyicisi** — Yalnızca para (yüksek eşik). Açık koşul yok; oyun kazanç hızını artırarak oyuncuyu doğal olarak yükseltmeye yönlendirir.
+- [x] **İki kapılı açılım** — Bir alan/slot önce gym level ile **satın alınabilir** olur, sonra ayrıca para verilip **inşa** edilir. Yeni slot'lar her zaman **boş** gelir (otomatik dolmaz).
+- [x] **Rating (1–5 yıldız)** — Kalite ekseni, **gym level'dan bağımsız**. Yavaş/sönümlü (son ~50 müşteri). Girdiler çoğunlukla davranışsal (memnuniyet, çeşitlilik, temizlik, VIP memnuniyeti); gym level yalnızca tavanı yükseltir. Etkiler: müşteri gelme hızı + VIP olasılığı + ödeme bonusu. Detay: §7b.
+- [x] **VIP / Influencer** — Gelme olasılığı **rating'e bağlı** (level'a değil). Görsel olarak belli edilir. Çarpan üç yere: bahşiş/ödeme (yüksek) + rating'e katkı (orantısız) + düşük sabır (zor ama ödüllü). Detay: §6.
+- [x] **Soyut gün sayacı** — ≈90 sn'lik "gün" birimi; görsel/ışık değişmez (atmosferik döngü değil, muhasebe birimi). Gün sonunda: maaş kesilir + rating güncellenir + köşede toast. **Oyun durmaz**, müşteriler akmaya devam eder. Tam-ekran özet opsiyonel. Detay: §3a.
+- [x] **Personel maaşı** — Hire cost (tek seferlik) + salary (her gün sonu periyodik). Para yetmezse personel **küser/yavaşlar** (geçici grev, para gelince düzelir) — game-over yok. Detay: §7e.
+- [x] **Kasa = yönetim terminali** — Çift işlevli: müşteri ödeme noktası + planlama ekranı. Oyuncu planlama yaparken kasa meşgul (fırsat maliyeti). Kasiyer personeli alınınca menü her yerden açılır. Detay: §7d.
+- [x] **Kapsam dışı (şimdilik)** — Offline/AFK kazanç YOK (aktif yönetim). Prestige/franchise reset YOK. Kilitli slot'ların hayalet/önizleme görünümü ilk aşamada YOK (görsel test sonrası tekrar değerlendirilecek).
