@@ -2,108 +2,115 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project
+## GymRush — Claude Kuralları
 
-**GymRush** — a browser-based 3D idle/management simulator (Monkey Mart style). Players run a gym: fix machines, help customers, earn money, upgrade equipment. Full design spec in [GDD.md](GDD.md). Current build status in [PROGRESS.md](PROGRESS.md).
+1. **Varsayımda bulunma.** Bir şey açık değilse sor. Hiçbir konuda tahminde bulunma.
+2. **En basit çözümü uygula.** Çalışacak şekilde minimum geliştirme yap. Talep edilmeyen hiçbir özellik ekleme.
+3. **Alakasız kodlara dokunma.** Mevcut task ile ilgisi olmayan dosyaları olduğu gibi bırak.
+4. **Belirsizlikleri bildir.** Kesin olmayan veya tam güvenilemeyen bir şey varsa kullanıcıya söyle.
 
-## Commands
+## Proje
+
+**GymRush** — tarayıcı tabanlı 3D idle/yönetim simülatörü (Monkey Mart tarzı). Oyuncu bir spor salonu işletir: makineleri tamir eder, müşterilere yardım eder, para kazanır, ekipman yükseltir. Tam tasarım dokümanı [GDD.md](GDD.md) içinde. Güncel build durumu [PROGRESS.md](PROGRESS.md) içinde.
+
+## Komutlar
 
 ```bash
-npm start       # dev server at localhost:3000 with HMR
+npm start       # localhost:3000'de HMR ile dev sunucusu
 npm run build   # production build → dist/
 ```
 
-No test runner configured.
+Test runner yapılandırılmamış.
 
-## Directory structure
+## Dizin yapısı
 
 ```
 src/
-  core/           # Engine primitives (Renderer, GameLoop, InputManager, CameraController)
-  ui/             # PixiJS HUD layer (UI.js — transparent overlay over Three.js canvas)
-  scene/          # Static world geometry (GymRoom.js)
-  items/          # Item class hierarchy + type configs + mesh builders
-  systems/        # Cross-cutting managers (ItemManager.js)
-  player/         # Player entity and model builder
-  controls/       # Input abstraction (DesktopControls, MobileControls stub)
+  core/           # Engine primitifleri (Renderer, GameLoop, InputManager, CameraController)
+  ui/             # PixiJS HUD katmanı (UI.js — Three.js canvas üzerinde şeffaf overlay)
+  scene/          # Statik dünya geometrisi (GymRoom.js)
+  items/          # Item sınıf hiyerarşisi + tip configleri + mesh builderlar
+  systems/        # Cross-cutting yöneticiler (ItemManager.js)
+  player/         # Player entity ve model builder
+  controls/       # Input soyutlaması (DesktopControls, MobileControls stub)
 ```
 
-## Architecture
+## Mimari
 
-Two rendering layers, two canvases, no shared state between them:
+İki render katmanı, iki canvas, aralarında paylaşılan state yok:
 
-- **`#game-canvas`** — Three.js `WebGLRenderer`. Owns the 3D scene, camera, lights, all meshes.
-- **`#ui-canvas`** — PixiJS `Application`, transparent, `pointer-events:none`, z-index 10. Owns all 2D HUD elements.
+- **`#game-canvas`** — Three.js `WebGLRenderer`. 3D sahneye, kameraya, ışıklara ve tüm mesh'lere sahip.
+- **`#ui-canvas`** — PixiJS `Application`, şeffaf, `pointer-events:none`, z-index 10. Tüm 2D HUD elemanlarına sahip.
 
-`src/index.js` wires everything together. System init order: Renderer → InputManager → UI → Scene/Room → Items → Player → CameraController → GameLoop.
+`src/index.js` her şeyi birbirine bağlar. Sistem init sırası: Renderer → InputManager → UI → Scene/Room → Items → Player → CameraController → GameLoop.
 
-### Core systems
+### Core sistemler
 
-| Class | File | Role |
+| Sınıf | Dosya | Rol |
 |---|---|---|
-| `Renderer` | `core/Renderer.js` | Wraps `THREE.WebGLRenderer`; handles orthographic camera resize (left/right/top/bottom) |
-| `GameLoop` | `core/GameLoop.js` | `requestAnimationFrame`; calls `update(delta)` then `render()`; delta capped at 50ms |
-| `InputManager` | `core/InputManager.js` | Key state by `e.code`; mouse NDC coords + buttons |
-| `CameraController` | `core/CameraController.js` | Arrow-key isometric panning (9 u/s). Arrow keys are reserved — **not** bound to player movement |
+| `Renderer` | `core/Renderer.js` | `THREE.WebGLRenderer`'ı sarar; orthographic kamera resize işlemini yönetir (left/right/top/bottom) |
+| `GameLoop` | `core/GameLoop.js` | `requestAnimationFrame`; önce `update(delta)` sonra `render()` çağırır; delta 50ms'de sınırlanır |
+| `InputManager` | `core/InputManager.js` | `e.code` ile tuş durumu; mouse NDC koordinatları + butonlar |
+| `CameraController` | `core/CameraController.js` | Ok tuşlarıyla izometrik kaydırma (9 u/s). Ok tuşları rezervedir — oyuncu hareketine **bağlı değildir** |
 
-### Camera
+### Kamera
 
-`THREE.OrthographicCamera`, `VIEW_SIZE=13`, positioned at `(18, 18, 18)` looking at origin. Isometric 45° angle. In-game screen axes map to world as:
+`THREE.OrthographicCamera`, `VIEW_SIZE=13`, `(18, 18, 18)` konumunda, origin'e bakar. İzometrik 45° açı. Oyun içi ekran eksenleri dünyaya şöyle eşlenir:
 
-| Screen | World XZ |
+| Ekran | Dünya XZ |
 |---|---|
-| Right (D / →) | `(+x, -z)` |
-| Left (A / ←) | `(-x, +z)` |
-| Up (W / ↑) | `(-x, -z)` |
-| Down (S / ↓) | `(+x, +z)` |
+| Sağ (D / →) | `(+x, -z)` |
+| Sol (A / ←) | `(-x, +z)` |
+| Yukarı (W / ↑) | `(-x, -z)` |
+| Aşağı (S / ↓) | `(+x, +z)` |
 
 ### GymRoom
 
-`src/scene/GymRoom.js` — `CELL=2`, `COLS=10`, `ROWS=8` → **20×16 world units**.
+`src/scene/GymRoom.js` — `CELL=2`, `COLS=10`, `ROWS=8` → **20×16 dünya birimi**.
 
-Floor uses a procedural `CanvasTexture` (128 px/cell, recessed rubber-tile look) with `texture.repeat.set(COLS, ROWS)` — exactly one tile per grid cell.
+Zemin procedural bir `CanvasTexture` kullanır (hücre başına 128 px, çukur lastik fayans görünümü) ve `texture.repeat.set(COLS, ROWS)` ile her grid hücresine tam bir fayans gelir.
 
-Walls: height 1.5 (low, so isometric camera sees the full room). Entrance gap: 4 units in the front wall (z = +8).
+Duvarlar: yükseklik 1.5 (alçak, böylece izometrik kamera tüm odayı görür). Giriş boşluğu: ön duvarda 4 birim (z = +8).
 
-`gridToWorld(col, row, colSpan, rowSpan)` converts grid coords to world-space centre. Slots carry `gridCol`, `gridRow`, `gridColSpan`, `gridRowSpan`, `typeKey`, and `position`.
+`gridToWorld(col, row, colSpan, rowSpan)` grid koordinatlarını dünya uzayındaki merkeze çevirir. Slot'lar `gridCol`, `gridRow`, `gridColSpan`, `gridRowSpan`, `typeKey` ve `position` taşır.
 
-### Item system
+### Item sistemi
 
-All items are data-driven. Adding a new item type = one entry in `itemTypes.js`, no new class.
+Tüm item'lar data-driven'dır. Yeni bir item tipi eklemek = `itemTypes.js` içinde bir entry, yeni sınıf yok.
 
 ```
 GymItem                     base: state, mesh (THREE.Group), interact(actor), update(delta)
 ├── OccupiableItem          usingPeople[], maxCapacity, queue[], queuePositions[], startSession/endSession
-│   ├── Machine             wear-based break chance, repairTimer, NEEDS_REPAIR/BROKEN states
-│   └── SharedFeature       multi-customer areas (boxing ring, mat area)
+│   ├── Machine             aşınma bazlı bozulma şansı, repairTimer, NEEDS_REPAIR/BROKEN state'leri
+│   └── SharedFeature       çok müşterili alanlar (boks ringi, mat alanı)
 └── Utility                 stock/capacity, AVAILABLE/NEEDS_REFILL
-    └── TowelBox            dual cleanCount/dirtyCount, washComplete()
+    └── TowelBox            ikili cleanCount/dirtyCount, washComplete()
 ```
 
-State tinting uses **emissive-only** (no material cloning). Each builder call creates fresh material instances so in-place emissive modification is safe.
+State renklendirmesi **yalnızca emissive** ile yapılır (material clone yok). Her builder çağrısı taze material instance'ları oluşturur, böylece yerinde emissive değişikliği güvenlidir.
 
-`ItemManager` (`systems/ItemManager.js`) — factory by `typeKey`, ticks all items, provides `getAvailable(category)` and `getByMeshId(itemId)` for raycasts.
+`ItemManager` (`systems/ItemManager.js`) — `typeKey` ile factory, tüm item'ları tick eder, raycast'ler için `getAvailable(category)` ve `getByMeshId(itemId)` sağlar.
 
-`meshBuilders.js` — composed `THREE.Group` models for TREADMILL, BENCH, BIKE, DUMBBELL_RACK. Every mesh in a group is tagged `userData.itemId` for raycast lookup.
+`meshBuilders.js` — TREADMILL, BENCH, BIKE, DUMBBELL_RACK için kompoze edilmiş `THREE.Group` modelleri. Bir grup içindeki her mesh, raycast lookup için `userData.itemId` ile etiketlenir.
 
 ### Player
 
-`Player` (`player/Player.js`) — WASD movement, `SPEED=6.5` u/s, clamped to room bounds. Smooth rotation toward movement direction (`ROT_SPEED=14` rad/s, short-arc lerp). Low-poly humanoid model (amber shirt — distinct from customers).
+`Player` (`player/Player.js`) — WASD hareketi, `SPEED=6.5` u/s, oda sınırlarına clamp'lenir. Hareket yönüne doğru yumuşak rotasyon (`ROT_SPEED=14` rad/s, kısa-yay lerp). Low-poly insansı model (amber tişört — müşterilerden ayırt edilir).
 
-Controls abstraction: `getMovement() → {x, z}`. Current implementation: `DesktopControls` (WASD). Stub: `MobileControls` (joystick `setJoystick(x,z)` called by PixiJS UI — not yet wired).
+Controls soyutlaması: `getMovement() → {x, z}`. Mevcut implementasyon: `DesktopControls` (WASD). Stub: `MobileControls` (joystick `setJoystick(x,z)`, PixiJS UI tarafından çağrılır — henüz bağlı değil).
 
-## Key conventions
+## Önemli konvansiyonlar
 
-- **Explicit string state enums** — no boolean flags per entity (`'IDLE'`, `'IN_USE'`, etc.)
-- **Three.js and PixiJS are strictly separated** — game logic in Three.js space; PixiJS only reads state to render HUD
-- **GSAP for UI transitions only** — `AnimationMixer` for character animations (not yet implemented)
-- **Flat/toon shading** — `MeshPhongMaterial`, no textures except the procedural floor `CanvasTexture`
-- **Fixed machine slots** — no drag-and-drop; slot positions defined in `GymRoom.SLOT_DEFS`
-- **Arrow keys = camera, WASD = player** — never overlap these bindings
+- **Açık string state enum'ları** — entity başına boolean flag yok (`'IDLE'`, `'IN_USE'` vb.)
+- **Three.js ve PixiJS kesin olarak ayrıdır** — oyun mantığı Three.js uzayında; PixiJS yalnızca HUD render etmek için state okur
+- **GSAP yalnızca UI geçişleri için** — karakter animasyonları için `AnimationMixer` (henüz implemente edilmedi)
+- **Flat/toon shading** — `MeshPhongMaterial`, procedural zemin `CanvasTexture` dışında texture yok
+- **Sabit makine slot'ları** — drag-and-drop yok; slot konumları `GymRoom.SLOT_DEFS` içinde tanımlı
+- **Ok tuşları = kamera, WASD = oyuncu** — bu bind'ler asla çakışmaz
 
-## Webpack asset handling
+## Webpack asset yönetimi
 
-Assets in `src/` import directly; Webpack emits to `dist/assets/`:
-- Images/SVG → `assets/textures/`
+`src/` içindeki asset'ler doğrudan import edilir; Webpack `dist/assets/` içine emit eder:
+- Görseller/SVG → `assets/textures/`
 - `.glb/.gltf/.fbx/.obj` → `assets/models/`
-- Audio → `assets/audio/`
+- Ses → `assets/audio/`

@@ -1,116 +1,113 @@
-# GymRush — Build Progress
+# GymRush — Build İlerlemesi
 
-## Next task (resume here)
-**Player interaction — repair & restock.** The maintenance loop runs (machines wear and break, utilities deplete) but the player can't act on it yet. Add:
-- Raycast click (or proximity + key) to target a broken / NEEDS_REPAIR machine and run a repair timer.
-- Restock utilities (water dispenser, soap) the same way.
-- Player "busy" state + on-screen progress while repairing/restocking.
-- Tie into Economy (repair may cost money) once the action works.
-
----
-
-## Milestone 3 — Satisfaction HUD + money fly-ups ✅
-- [x] Satisfaction meter (top-right PixiJS): averages active customers' `satisfaction`, red→amber→green, dims when gym empty (`UI.updateSatisfaction`, `CustomerSpawner.averageSatisfaction`)
-- [x] GSAP `+$N` fly-up at the cashier on each payment — `Economy.earn(amount, worldPosition)` carries the source point; `index.js` projects world→screen and calls `UI.showMoneyFlyup`
-- [x] World→screen projection helper in `index.js` for HUD overlays
+## Sıradaki task (buradan devam et)
+**Oyuncu etkileşimi — tamir & stok yenileme.** Bakım döngüsü çalışıyor (makineler aşınıp bozuluyor, utility'ler tükeniyor) ama oyuncu henüz müdahale edemiyor. Eklenecekler:
+- Bozuk / NEEDS_REPAIR durumundaki bir makineyi hedeflemek için raycast tıklama (veya yakınlık + tuş) ve tamir timer'ı.
+- Utility'leri (su sebili, sabun) aynı şekilde yeniden stoklamak.
+- Tamir/stok sırasında oyuncu "busy" durumu + ekranda ilerleme göstergesi.
+- Aksiyon çalıştıktan sonra Economy'ye bağlama (tamir para götürebilir).
 
 ---
 
-## Milestone 1 — Core scene + item system + player ✅
+## Milestone 3 — Memnuniyet HUD'u + para fly-up'ları ✅
+- [x] Memnuniyet barı (sağ üst PixiJS): aktif müşterilerin `satisfaction` değerlerini ortalar, kırmızı→amber→yeşil, gym boşken soluk (`UI.updateSatisfaction`, `CustomerSpawner.averageSatisfaction`)
+- [x] Her ödemede kasada GSAP `+$N` fly-up'ı — `Economy.earn(amount, worldPosition)` kaynak noktasını taşır; `index.js` dünya→ekran projeksiyonu yapıp `UI.showMoneyFlyup` çağırır
+- [x] HUD overlay'leri için `index.js` içinde dünya→ekran projeksiyon helper'ı
 
-Everything needed to see and move around the gym is done. This is the foundation all gameplay systems build on.
+---
 
-### Project setup
-- [x] Webpack + Three.js + PixiJS + GSAP scaffold
-- [x] Dual-canvas architecture (`#game-canvas` Three.js, `#ui-canvas` PixiJS overlay)
-- [x] Core systems: `Renderer`, `GameLoop`, `InputManager`, `UI`
-- [x] Git repo initialized, published to GitHub (`hakantoker/gymrush`)
+## Milestone 1 — Çekirdek sahne + item sistemi + oyuncu ✅
 
-### Design decisions (all locked — see GDD §13)
-- [x] No stamina bar, no day/night cycle, no failure state
-- [x] Fixed predefined machine slots (Monkey Mart style)
-- [x] Two item categories: Machine (IDLE/IN_USE/NEEDS_REPAIR/BROKEN) and Utility (AVAILABLE/NEEDS_REFILL)
-- [x] Wear-based break chance: `min(max, base + useCount × growth)`, checked per session end
-- [x] Wear resets only on full repair (BROKEN), not quick fix (NEEDS_REPAIR)
-- [x] Towel system: dual-slot Towel Box, Washing Machine cycle
-- [x] Workers: post-MVP
-- [x] Player movement: WASD with isometric screen-space projection
+Spor salonunu görmek ve içinde dolaşmak için gereken her şey tamam. Bu, tüm oyun sistemlerinin üzerine inşa edildiği temel.
 
-### Scene
-- [x] Orthographic isometric camera (18,18,18), `VIEW_SIZE=13`
-- [x] `GymRoom` — 20×16 world units, 10 cols × 8 rows, `CELL=2`
-- [x] Procedural grid floor texture (128 px/cell, rubber tile look)
-- [x] Low walls (1.5 u), 4-unit entrance gap, green entrance mat
-- [x] 7 slot markers (3 treadmill, 1 bench, 1 bike, 1 dumbbell rack, 2 reserved)
+### Proje kurulumu
+- [x] Webpack + Three.js + PixiJS + GSAP iskeleti
+- [x] İkili canvas mimarisi (`#game-canvas` Three.js, `#ui-canvas` PixiJS overlay)
+- [x] Core sistemler: `Renderer`, `GameLoop`, `InputManager`, `UI`
+- [x] Git repo başlatıldı, GitHub'a yayınlandı (`hakantoker/gymrush`)
 
-### Item system
-- [x] `itemTypes.js` — 9 type configs (TREADMILL, BENCH, BIKE, DUMBBELL_RACK, BOXING_RING, MAT_AREA, WATER_DISPENSER, SOAP_DISPENSER, TOWEL_BOX)
-- [x] `GymItem` — base: state, emissive-tinted mesh, `interact(actor)`, `update(delta)`
-- [x] `OccupiableItem` — `usingPeople[]`, `maxCapacity`, queue system (`queue[]`, `queuePositions[]`, enqueue/dequeue/leaveQueue)
-- [x] `Machine` — wear accumulator, `repairTimer`, NEEDS_REPAIR/BROKEN with timer escalation
-- [x] `SharedFeature` — multi-customer capacity
+### Tasarım kararları (hepsi kilitli — bkz. GDD §13)
+- [x] Stamina barı yok, day/night döngüsü yok, failure state yok
+- [x] Sabit predefined makine slot'ları (Monkey Mart tarzı)
+- [x] İki item kategorisi: Machine (IDLE/IN_USE/NEEDS_REPAIR/BROKEN) ve Utility (AVAILABLE/NEEDS_REFILL)
+- [x] Aşınma bazlı bozulma şansı: `min(max, base + useCount × growth)`, her session sonunda kontrol edilir
+- [x] Aşınma yalnızca full repair'de sıfırlanır (BROKEN), quick fix'te (NEEDS_REPAIR) değil
+- [x] Havlu sistemi: ikili slot'lu Towel Box, Washing Machine döngüsü
+- [x] Worker'lar: post-MVP
+- [x] Oyuncu hareketi: izometrik ekran-uzayı projeksiyonu ile WASD
+
+### Sahne
+- [x] Orthographic izometrik kamera (18,18,18), `VIEW_SIZE=13`
+- [x] `GymRoom` — 20×16 dünya birimi, 10 col × 8 row, `CELL=2`
+- [x] Procedural grid zemin texture'ı (hücre başına 128 px, lastik fayans görünümü)
+- [x] Alçak duvarlar (1.5 u), 4 birimlik giriş boşluğu, yeşil giriş paspası
+- [x] 7 slot işaretçisi (3 treadmill, 1 bench, 1 bike, 1 dumbbell rack, 2 rezerve)
+
+### Item sistemi
+- [x] `itemTypes.js` — 9 tip config (TREADMILL, BENCH, BIKE, DUMBBELL_RACK, BOXING_RING, MAT_AREA, WATER_DISPENSER, SOAP_DISPENSER, TOWEL_BOX)
+- [x] `GymItem` — base: state, emissive renklendirilmiş mesh, `interact(actor)`, `update(delta)`
+- [x] `OccupiableItem` — `usingPeople[]`, `maxCapacity`, queue sistemi (`queue[]`, `queuePositions[]`, enqueue/dequeue/leaveQueue)
+- [x] `Machine` — aşınma birikimi, `repairTimer`, timer eskalasyonlu NEEDS_REPAIR/BROKEN
+- [x] `SharedFeature` — çok müşterili kapasite
 - [x] `Utility` — stock/capacity, AVAILABLE/NEEDS_REFILL
-- [x] `TowelBox` — dual cleanCount/dirtyCount, `washComplete()` hook
-- [x] `meshBuilders.js` — Treadmill, Bench, Bike, Dumbbell Rack as composed Three.js geometry
-- [x] `ItemManager` — factory by typeKey, per-frame tick, raycast lookup
+- [x] `TowelBox` — ikili cleanCount/dirtyCount, `washComplete()` hook'u
+- [x] `meshBuilders.js` — Treadmill, Bench, Bike, Dumbbell Rack kompoze Three.js geometrisi olarak
+- [x] `ItemManager` — typeKey ile factory, frame başına tick, raycast lookup
 
-### Player
-- [x] Low-poly humanoid model (amber shirt — distinct from customers)
-- [x] WASD movement with isometric screen-projection, speed 6.5 u/s
-- [x] Smooth rotation lerp toward movement direction
-- [x] Room boundary clamping
-- [x] `DesktopControls` (WASD) + `MobileControls` stub (joystick ready for UI wiring)
-- [x] Arrow keys → camera pan (`CameraController`)
-
----
-
-## Milestone 2 — Customers, economy, RPG stats, cashier ✅
-
-The full customer earning loop runs end-to-end: spawn → pick machines for their program → queue → use (accrue fee) → maybe drink water → pay at cashier → exit.
-
-### Customer agents
-- [x] `Customer.js` — full AI state machine (WALKING_TO_MACHINE, IN_QUEUE, USING_MACHINE, WALKING_TO_DISPENSER, AT_DISPENSER, WAITING, WALKING_TO_CASHIER, IN_CASHIER_QUEUE, AT_CASHIER, WALKING_TO_EXIT, LEAVING_UNHAPPY)
-- [x] `customerModel.js` — low-poly humanoid, 4 shirt palettes × 4 skin tones (distinct from amber player)
-- [x] `CustomerSpawner.js` — spawn every 8s, cap 8 concurrent
-- [x] Straight-line pathfinding (single room, no obstacles)
-- [x] Multi-machine sessions: each customer visits 3–4 machines per program
-- [x] In-use timer bar above machines (camera-facing, green→amber→red)
-
-### RPG stat system (drives machine choice + payout)
-- [x] 10 muscle groups (`muscleGroups.js`)
-- [x] Disciplines (`disciplines.js`) — Bodybuilder, Cardio Runner, CrossFit, Weight Loss, + 20% Casual
-- [x] Training programs (`trainingPrograms.js`) — weighted muscle-group goals, machine count, water chance
-- [x] Score-based machine selection: `score = Σ machineEffect[g] × programGoal[g]`
-- [x] Greedy `_decide()` builds wish-list and re-picks after each machine
-
-### Satisfaction + economy
-- [x] `Economy.js` — money (start 500), `earn()`/`spend()`, listener API
-- [x] Satisfaction starts at 50, drains while waiting/queueing (different rates per state)
-- [x] Goal-fulfillment bonus (up to +30) applied when wish-list complete
-- [x] Money HUD counter (PixiJS, top-left)
-
-### Cashier station
-- [x] `CashierStation.js` — left of entrance, queue API mirrors OccupiableItem, MAX_QUEUE=5
-- [x] `cashierModel.js` — counter + cash register, amber branding, faces room interior
-- [x] Fees accrue per machine, collected only at cashier: `tip = round(accruedFee × satisfaction/50 × 0.3)`
-- [x] Design consequence: customers who run out of patience in the cashier line forfeit all accrued fees
+### Oyuncu
+- [x] Low-poly insansı model (amber tişört — müşterilerden ayrı)
+- [x] İzometrik ekran-projeksiyonu ile WASD hareketi, hız 6.5 u/s
+- [x] Hareket yönüne yumuşak rotasyon lerp'i
+- [x] Oda sınırı clamp'leme
+- [x] `DesktopControls` (WASD) + `MobileControls` stub'ı (joystick, UI bağlantısına hazır)
+- [x] Ok tuşları → kamera kaydırma (`CameraController`)
 
 ---
 
-## Up next (in order)
+## Milestone 2 — Müşteriler, ekonomi, RPG statları, kasiyer ✅
 
-1. **Satisfaction HUD + money fly-ups** ← next session
-   - PixiJS satisfaction meter (top-right)
-   - GSAP `+$X` popup at cashier on payment
-2. **Player interaction** — raycast-click broken/needs-repair machines to repair; restock utilities
-3. **Waypoint pathfinding** — replace straight-line with node graph for multi-room future
-4. **Areas system** — Area class, unlock mechanic for Locker Room / Bathroom etc.
-5. **Towel / Laundry system** — Washing Machine cycle, dual Towel Box
-6. **Workers** — NPC workers with task priority loops (post-MVP)
-7. **Polish** — end-of-day summary, sound
-8. **Save system** — `localStorage` JSON snapshot
+Tam müşteri kazanç döngüsü uçtan uca çalışıyor: spawn → programına göre makine seç → kuyruğa gir → kullan (ücret biriktir) → belki su iç → kasada öde → çık.
+
+### Müşteri agent'ları
+- [x] `Customer.js` — tam AI state machine (WALKING_TO_MACHINE, IN_QUEUE, USING_MACHINE, WALKING_TO_DISPENSER, AT_DISPENSER, WAITING, WALKING_TO_CASHIER, IN_CASHIER_QUEUE, AT_CASHIER, WALKING_TO_EXIT, LEAVING_UNHAPPY)
+- [x] `customerModel.js` — low-poly insansı, 4 tişört paleti × 4 ten tonu (amber oyuncudan ayrı)
+- [x] `CustomerSpawner.js` — 8 saniyede bir spawn, eşzamanlı 8 limiti
+- [x] Düz çizgi pathfinding (tek oda, engel yok)
+- [x] Çok makineli session'lar: her müşteri program başına 3–4 makine ziyaret eder
+- [x] Makinelerin üzerinde kullanım timer barı (kameraya dönük, yeşil→amber→kırmızı)
+
+### RPG stat sistemi (makine seçimini + ödemeyi yönetir)
+- [x] 10 kas grubu (`muscleGroups.js`)
+- [x] Disiplinler (`disciplines.js`) — Bodybuilder, Cardio Runner, CrossFit, Weight Loss, + %20 Casual
+- [x] Antrenman programları (`trainingPrograms.js`) — ağırlıklı kas grubu hedefleri, makine sayısı, su şansı
+- [x] Skor bazlı makine seçimi: `score = Σ machineEffect[g] × programGoal[g]`
+- [x] Açgözlü `_decide()` wish-list oluşturur ve her makineden sonra yeniden seçer
+
+### Memnuniyet + ekonomi
+- [x] `Economy.js` — para (başlangıç 500), `earn()`/`spend()`, listener API'ı
+- [x] Memnuniyet 50'den başlar, beklerken/kuyruktayken azalır (duruma göre farklı oranlar)
+- [x] Wish-list tamamlandığında uygulanan hedef-tamamlama bonusu (+30'a kadar)
+- [x] Para HUD sayacı (PixiJS, sol üst)
+
+### Kasiyer istasyonu
+- [x] `CashierStation.js` — girişin solunda, queue API'ı OccupiableItem'ı yansıtır, MAX_QUEUE=5
+- [x] `cashierModel.js` — tezgah + yazar kasa, amber marka şeridi, oda içine dönük
+- [x] Ücretler makine başına birikir, yalnızca kasada toplanır: `tip = round(accruedFee × satisfaction/50 × 0.3)`
+- [x] Tasarım sonucu: kasiyer sırasında sabrı tükenen müşteriler birikmiş tüm ücretlerini kaybeder
 
 ---
 
-## Open decisions
-- None. All decisions resolved — see GDD §13.
+## Sırada ne var (sırasıyla)
+
+1. **Oyuncu etkileşimi** ← sıradaki — bozuk/tamir gereken makineleri raycast-tıklama ile tamir; utility'leri yeniden stoklama
+2. **Waypoint pathfinding** — çok odalı gelecek için düz çizgiyi node graph ile değiştir
+3. **Areas sistemi** — Area sınıfı, Locker Room / Bathroom vb. için unlock mekaniği
+4. **Havlu / Çamaşır sistemi** — Washing Machine döngüsü, ikili Towel Box
+5. **Worker'lar** — task öncelik döngülü NPC worker'lar (post-MVP)
+6. **Polish** — gün sonu özeti, ses
+7. **Save sistemi** — `localStorage` JSON snapshot
+
+---
+
+## Açık kararlar
+- Yok. Tüm kararlar çözüldü — bkz. GDD §13.

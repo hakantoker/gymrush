@@ -1,276 +1,276 @@
-# Game Design Document — GymRush (Working Title)
+# Oyun Tasarım Dokümanı — GymRush (Geçici İsim)
 
-## 1. Overview
+## 1. Genel Bakış
 
-| Field | Value |
+| Alan | Değer |
 |---|---|
-| Genre | Idle / Management Simulator |
-| Perspective | 2.5D Orthographic |
-| Platform | Web (Browser) |
-| Art Style | Low-poly, flat shading, limited palette |
-| Core Fantasy | Build and run the best gym in town |
+| Tür | Idle / Yönetim Simülatörü |
+| Perspektif | 2.5D Orthographic |
+| Platform | Web (Tarayıcı) |
+| Sanat Stili | Low-poly, flat shading, sınırlı palet |
+| Çekirdek Fantezi | Şehrin en iyi spor salonunu kur ve işlet |
 
 ---
 
-## 2. Visual Style
+## 2. Görsel Stil
 
-- **Camera:** Fixed orthographic camera, slight top-down angle (isometric-like)
-- **Models:** Simple low-poly 3D humanoids and props, no textures — flat `MeshToonMaterial` or `MeshPhongMaterial`
-- **Palette:** Warm neutrals for gym floor/walls, accent colors per machine tier
-- **Lighting:** Soft ambient + single directional light, no harsh shadows
-- **UI:** PixiJS 2D overlay — clean, minimal icons and panels. GSAP transitions for popups/notifications.
+- **Kamera:** Sabit orthographic kamera, hafif yukarıdan açı (izometrik benzeri)
+- **Modeller:** Basit low-poly 3D insansılar ve eşyalar, texture yok — flat `MeshToonMaterial` veya `MeshPhongMaterial`
+- **Palet:** Spor salonu zemini/duvarları için sıcak nötr tonlar, makine tier'ı başına vurgu renkleri
+- **Aydınlatma:** Yumuşak ambient + tek directional ışık, sert gölge yok
+- **UI:** PixiJS 2D overlay — temiz, minimal ikonlar ve paneller. Popup/bildirimler için GSAP geçişleri.
 
 ---
 
-## 3. Core Gameplay Loop
+## 3. Çekirdek Oyun Döngüsü
 
 ```
-Customer enters gym
-    → Uses machine (timer counts down)
-    → Player maintains gym while customer is active
-        → Fix broken machines
-        → Clean bathroom
-        → Help customers in trouble
-    → Customer finishes and pays
-        → Player earns money
-→ Player spends money on upgrades
-→ Repeat with more customers / better machines
+Müşteri spor salonuna girer
+    → Makine kullanır (timer geri sayar)
+    → Müşteri aktifken oyuncu salonu yönetir
+        → Bozuk makineleri tamir eder
+        → Tuvaleti temizler
+        → Zorda kalan müşterilere yardım eder
+    → Müşteri bitirir ve öder
+        → Oyuncu para kazanır
+→ Oyuncu parayı upgrade'lere harcar
+→ Daha fazla müşteri / daha iyi makinelerle tekrar
 ```
 
 ---
 
-## 4. Player
+## 4. Oyuncu
 
-### Character
-- Low-poly 3D humanoid — amber shirt for clear visual contrast against customers
-- **Desktop:** WASD free movement, isometric-projected (W/A/S/D map to screen up/left/down/right)
-- **Mobile:** virtual joystick (PixiJS overlay — post-MVP)
-- Player smoothly rotates to face movement direction
-- Task interaction: player walks near an item and clicks/taps it → `interact(actor)` is called
+### Karakter
+- Low-poly 3D insansı — müşterilere karşı net görsel kontrast için amber tişört
+- **Masaüstü:** WASD serbest hareket, izometrik-projeksiyonlu (W/A/S/D ekran yukarı/sol/aşağı/sağ ile eşlenir)
+- **Mobil:** sanal joystick (PixiJS overlay — post-MVP)
+- Oyuncu hareket yönüne doğru yumuşakça döner
+- Task etkileşimi: oyuncu bir item'a yaklaşır ve tıklar/dokunur → `interact(actor)` çağrılır
 
-### Player Tasks
-| Task | Trigger | Time Cost | Consequence if Ignored |
+### Oyuncu Task'ları
+| Task | Tetikleyici | Zaman Maliyeti | İhmal Edilirse Sonuç |
 |---|---|---|---|
-| Fix machine | Machine shows NEEDS_REPAIR indicator | Medium | repairTimer expires → BROKEN, customer refunded |
-| Full repair | Machine is BROKEN | Long + costs $ | Machine stays unusable |
-| Refill utility | Utility shows NEEDS_REFILL | Short | Utility unusable until refilled |
-| Help customer | Customer shows "!" icon | Short | Customer leaves without paying, satisfaction penalty |
+| Makine tamir et | Makine NEEDS_REPAIR göstergesi gösterir | Orta | repairTimer dolar → BROKEN, müşteriye iade |
+| Tam onarım | Makine BROKEN durumda | Uzun + $ maliyeti | Makine kullanılamaz kalır |
+| Utility doldur | Utility NEEDS_REFILL gösterir | Kısa | Doldurulana kadar utility kullanılamaz |
+| Müşteriye yardım et | Müşteri "!" ikonu gösterir | Kısa | Müşteri ödemeden ayrılır, memnuniyet cezası |
 
-### Player Movement
-- WASD movement, speed 6.5 u/s, clamped to room bounds
-- Smooth rotation lerp toward movement direction (14 rad/s, short-arc)
-- Walk animation: TODO (Three.js AnimationMixer — post-MVP)
-- Arrow keys pan the camera independently
-
----
-
-## 5. Items
-
-All interactive items in the gym belong to one of two categories: **Machines** or **Utilities**. Each category has its own state machine. Every item type is defined by a config object (data-driven) so new items can be added without new classes.
+### Oyuncu Hareketi
+- WASD hareketi, hız 6.5 u/s, oda sınırlarına clamp'li
+- Hareket yönüne yumuşak rotasyon lerp'i (14 rad/s, kısa-yay)
+- Yürüme animasyonu: TODO (Three.js AnimationMixer — post-MVP)
+- Ok tuşları kamerayı bağımsız olarak kaydırır
 
 ---
 
-### Category A — Machines (gym equipment)
+## 5. Item'lar
 
-Customers occupy machines for a session. Machines can malfunction and escalate to broken if ignored.
+Spor salonundaki tüm etkileşimli item'lar iki kategoriden birine aittir: **Machine** veya **Utility**. Her kategorinin kendi state machine'i vardır. Her item tipi bir config objesiyle tanımlanır (data-driven), böylece yeni item'lar yeni sınıf olmadan eklenebilir.
+
+---
+
+### Kategori A — Machine'ler (spor salonu ekipmanı)
+
+Müşteriler bir session boyunca makineleri işgal eder. Makineler arızalanabilir ve ihmal edilirse bozuk duruma yükselebilir.
 
 **State machine:**
 ```
-IDLE → IN_USE ──(malfunction chance per session)──→ NEEDS_REPAIR
+IDLE → IN_USE ──(session başına arıza şansı)──→ NEEDS_REPAIR
   ↑                                                      ↓
-  └──────────── player fixes (quick) ────────────────────┘
-                                                          ↓ (timer expires)
+  └──────────── oyuncu tamir eder (hızlı) ───────────────┘
+                                                          ↓ (timer dolar)
                                                        BROKEN
                                                           ↓
-                                              player fixes (costs $) → IDLE
+                                          oyuncu tamir eder ($ maliyeti) → IDLE
 ```
 
-| State | Indicator | Description |
+| State | Gösterge | Açıklama |
 |---|---|---|
-| IDLE | — | Available for next customer |
-| IN_USE | Blue | Occupied, session timer running |
-| NEEDS_REPAIR | Orange | Malfunctioned — player must fix within repair window |
-| BROKEN | Red | Repair window missed — costs money to fix, customer refunded |
+| IDLE | — | Sonraki müşteri için müsait |
+| IN_USE | Mavi | Dolu, session timer'ı çalışıyor |
+| NEEDS_REPAIR | Turuncu | Arızalandı — oyuncu tamir penceresi içinde onarmalı |
+| BROKEN | Kırmızı | Tamir penceresi kaçırıldı — onarması para gerektirir, müşteriye iade |
 
-**Malfunction** happens randomly during a session (configurable chance per item type). NEEDS_REPAIR has a countdown timer; if it expires the machine transitions to BROKEN.
+**Arıza** session sırasında rastgele olur (item tipi başına yapılandırılabilir şans). NEEDS_REPAIR'in geri sayım timer'ı vardır; dolarsa makine BROKEN'a geçer.
 
-**Machine list:**
+**Makine listesi:**
 
-| Item | Area | Tier | Notes |
+| Item | Alan | Tier | Notlar |
 |---|---|---|---|
-| Treadmill | Main Gym | 1–3 | Most common, high malfunction rate |
-| Weight Bench | Main Gym | 1–3 | Medium frequency |
-| Stationary Bike | Main Gym | 1–3 | Cheaper cardio option |
-| Dumbbell Rack | Main Gym | 1 | Passive — no timer, no malfunction |
-| Pull-up Bar | Main Gym | 1 | Budget option |
-| Boxing Bag | Boxing Ring | 1–2 | Unlockable area |
-| Sauna Chair | Sauna | 2–3 | Unlockable area |
+| Treadmill | Main Gym | 1–3 | En yaygın, yüksek arıza oranı |
+| Weight Bench | Main Gym | 1–3 | Orta sıklık |
+| Stationary Bike | Main Gym | 1–3 | Daha ucuz kardiyo seçeneği |
+| Dumbbell Rack | Main Gym | 1 | Pasif — timer yok, arıza yok |
+| Pull-up Bar | Main Gym | 1 | Bütçe seçeneği |
+| Boxing Bag | Boxing Ring | 1–2 | Açılabilir alan |
+| Sauna Chair | Sauna | 2–3 | Açılabilir alan |
 
-**Machine tiers:**
+**Makine tier'ları:**
 
-| Tier | Visual | Fee | Unlock | Notes |
+| Tier | Görsel | Ücret | Açılış | Notlar |
 |---|---|---|---|---|
-| 1 | Basic, worn | Low | Free | Starter |
-| 2 | Clean, modern | Medium | Mid-game | More customers |
-| 3 | Premium, glowing | High | Late-game | Rare customers, big payout |
+| 1 | Basit, yıpranmış | Düşük | Ücretsiz | Başlangıç |
+| 2 | Temiz, modern | Orta | Oyun ortası | Daha fazla müşteri |
+| 3 | Premium, parlayan | Yüksek | Oyun sonu | Nadir müşteriler, büyük ödeme |
 
 ---
 
-### Category B — Utilities (consumables & service tools)
+### Kategori B — Utility'ler (sarf malzemeleri & servis araçları)
 
-Utilities are not used by customers for sessions — they support the gym environment. They drain over time or per use and need restocking/refilling by the player or a worker.
+Utility'ler müşteriler tarafından session için kullanılmaz — salon ortamını desteklerler. Zamanla veya kullanım başına tükenir ve oyuncu ya da bir worker tarafından yeniden stoklanmaları/doldurulmaları gerekir.
 
 **State machine:**
 ```
-AVAILABLE ──(drains per use or over time)──→ NEEDS_REFILL
-                                                   ↓
-                                      player/worker refills → AVAILABLE
+AVAILABLE ──(kullanım başına veya zamanla tükenir)──→ NEEDS_REFILL
+                                                            ↓
+                                      oyuncu/worker doldurur → AVAILABLE
 ```
 
-| Item | Area | Drains by | Notes |
+| Item | Alan | Tükenme şekli | Notlar |
 |---|---|---|---|
-| Water Dispenser | Locker Room | Per customer use | Customers stop at it after sessions |
-| Towel Box (clean) | Locker Room | Per customer (1 towel taken) | Part of the towel system — see §5a |
-| Towel Box (dirty) | Locker Room | Per customer (1 towel returned) | Fills up — triggers laundry need |
-| Soap Dispenser | Bathroom | Per shower use | — |
-| Toilet Paper | Bathroom | Over time | — |
+| Water Dispenser | Locker Room | Müşteri kullanımı başına | Müşteriler session sonrası uğrar |
+| Towel Box (temiz) | Locker Room | Müşteri başına (1 havlu alınır) | Havlu sisteminin parçası — bkz. §5a |
+| Towel Box (kirli) | Locker Room | Müşteri başına (1 havlu iade) | Dolar — çamaşır ihtiyacını tetikler |
+| Soap Dispenser | Bathroom | Duş kullanımı başına | — |
+| Toilet Paper | Bathroom | Zamanla | — |
 
 ---
 
-### 5a. Towel System (Laundry Area unlock)
+### 5a. Havlu Sistemi (Laundry Area açılışı)
 
-Unlocking the **Laundry Area** adds the full towel cycle to the gym.
+**Laundry Area**'yı açmak salona tam havlu döngüsünü ekler.
 
-**The towel box is a dual-slot utility:**
-- **Clean side** — stock of fresh towels customers pick up before training
-- **Dirty side** — pile of used towels customers return after training
+**Towel Box ikili slot'lu bir utility'dir:**
+- **Temiz taraf** — müşterilerin antrenman öncesi aldığı taze havlu stoğu
+- **Kirli taraf** — müşterilerin antrenman sonrası iade ettiği kullanılmış havlu yığını
 
-**Customer towel cycle:**
+**Müşteri havlu döngüsü:**
 ```
-Customer enters
-→ picks up 1 clean towel (clean count -1)
-→ trains
-→ returns towel to dirty side (dirty count +1)
-→ exits
-```
-
-**Laundry cycle:**
-```
-Dirty side reaches threshold
-→ NEEDS_WASH indicator appears
-→ Player or Laundry Worker loads Washing Machine
-→ Washing Machine runs (timed cycle)
-→ Cycle complete → dirty count resets, clean count refills
+Müşteri girer
+→ 1 temiz havlu alır (temiz sayı -1)
+→ antrenman yapar
+→ havluyu kirli tarafa iade eder (kirli sayı +1)
+→ çıkar
 ```
 
-If clean towels run out → customers cannot get a towel → satisfaction penalty.
+**Çamaşır döngüsü:**
+```
+Kirli taraf eşiğe ulaşır
+→ NEEDS_WASH göstergesi belirir
+→ Oyuncu veya Laundry Worker Washing Machine'i yükler
+→ Washing Machine çalışır (zamanlı döngü)
+→ Döngü biter → kirli sayı sıfırlanır, temiz sayı yeniden dolar
+```
+
+Temiz havlular biterse → müşteriler havlu alamaz → memnuniyet cezası.
 
 ---
 
-## 6. Customers
+## 6. Müşteriler
 
-### Behavior Flow
+### Davranış Akışı
 ```
-Spawn at entrance
-→ Browse (look for free machine of preferred type)
-→ Use machine (pay reservation)
-→ Finish → walk to exit → pay remainder
-         OR
-→ Get stuck / need help → show "!" → wait for player
-→ If ignored too long → leave without paying + satisfaction penalty
+Girişte spawn
+→ Göz at (tercih edilen tipte boş makine ara)
+→ Makine kullan (rezervasyon öde)
+→ Bitir → çıkışa yürü → kalanı öde
+         VEYA
+→ Takıl / yardım gerek → "!" göster → oyuncuyu bekle
+→ Çok uzun ihmal edilirse → ödemeden ayrıl + memnuniyet cezası
 ```
 
-### Customer Types (MVP)
+### Müşteri Tipleri (MVP)
 
-| Type | Preferred Machines | Patience | Tip Chance |
+| Tip | Tercih Edilen Makineler | Sabır | Bahşiş Şansı |
 |---|---|---|---|
-| Casual | Treadmill, Bike | High | Low |
-| Bodybuilder | Bench, Dumbbell | Medium | Medium |
-| Regular | Any | High | High |
-| Elderly | Low-impact only | Very High | Medium |
-| Influencer | Tier 3 only | Low | Very High |
+| Casual | Treadmill, Bike | Yüksek | Düşük |
+| Bodybuilder | Bench, Dumbbell | Orta | Orta |
+| Regular | Herhangi | Yüksek | Yüksek |
+| Elderly | Yalnızca düşük etkili | Çok Yüksek | Orta |
+| Influencer | Yalnızca Tier 3 | Düşük | Çok Yüksek |
 
-### Customer Satisfaction
-- Per-visit score: affects tip amount
-- Satisfaction reduces on: broken machine, long wait, dirty bathroom, ignored trouble
-- Satisfaction increases on: quick player response, Tier 2/3 machines, clean facility
-
----
-
-## 7. Economy
-
-### Income Sources
-| Source | Amount |
-|---|---|
-| Machine usage fee | Fixed per tier per session |
-| Customer tip | Variable (0–30% of fee) based on satisfaction |
-| VIP customer bonus | Rare flat bonus |
-
-### Expenses / Costs
-| Item | Cost Type |
-|---|---|
-| Buy new machine | One-time |
-| Upgrade machine to next tier | One-time (replaces model) |
-| Restock bathroom supplies | Recurring |
-| Repair a fully broken machine | One-time penalty cost |
-
-### Progression Milestones (Draft)
-
-| Milestone | Unlock |
-|---|---|
-| Day 1 | 2 Treadmills (Tier 1), 1 Bench (Tier 1) |
-| $500 earned | Unlock Shower Stall slot |
-| $1,200 earned | Unlock first Tier 2 upgrade |
-| $3,000 earned | Second gym room / expansion area |
-| $7,500 earned | Tier 3 machines available |
-| $15,000 earned | Hire an NPC helper (auto-cleans bathroom) |
+### Müşteri Memnuniyeti
+- Ziyaret başına skor: bahşiş miktarını etkiler
+- Memnuniyet şunlarda azalır: bozuk makine, uzun bekleme, kirli tuvalet, ihmal edilen sorun
+- Memnuniyet şunlarda artar: oyuncunun hızlı tepkisi, Tier 2/3 makineler, temiz tesis
 
 ---
 
-## 7a. Workers
+## 7. Ekonomi
 
-Players can hire NPC workers to automate tasks. Workers are persistent NPCs with their own movement and action loops — they are not player-controlled.
+### Gelir Kaynakları
+| Kaynak | Miktar |
+|---|---|
+| Makine kullanım ücreti | Tier başına session başına sabit |
+| Müşteri bahşişi | Memnuniyete göre değişken (ücretin %0–30'u) |
+| VIP müşteri bonusu | Nadir sabit bonus |
 
-### Worker Types
+### Giderler / Maliyetler
+| Item | Maliyet Tipi |
+|---|---|
+| Yeni makine al | Tek seferlik |
+| Makineyi bir sonraki tier'a yükselt | Tek seferlik (modeli değiştirir) |
+| Tuvalet malzemelerini yenile | Tekrarlayan |
+| Tamamen bozuk makineyi onar | Tek seferlik ceza maliyeti |
 
-| Worker | Automates | Hire Cost | Salary |
+### İlerleme Kilometre Taşları (Taslak)
+
+| Kilometre Taşı | Açılış |
+|---|---|
+| Gün 1 | 2 Treadmill (Tier 1), 1 Bench (Tier 1) |
+| $500 kazanıldı | Shower Stall slot'u açılır |
+| $1,200 kazanıldı | İlk Tier 2 upgrade açılır |
+| $3,000 kazanıldı | İkinci salon odası / genişleme alanı |
+| $7,500 kazanıldı | Tier 3 makineler kullanılabilir |
+| $15,000 kazanıldı | NPC yardımcı kirala (tuvaleti otomatik temizler) |
+
+---
+
+## 7a. Worker'lar
+
+Oyuncular task'ları otomatikleştirmek için NPC worker'lar kiralayabilir. Worker'lar kendi hareket ve aksiyon döngüleri olan kalıcı NPC'lerdir — oyuncu kontrollü değildirler.
+
+### Worker Tipleri
+
+| Worker | Otomatikleştirir | Kiralama Maliyeti | Maaş |
 |---|---|---|---|
-| Personal Trainer | Helps troubled customers (replaces player "!" response) | High | Medium |
-| Laundry Worker | Loads washing machine, refills towel box | Medium | Low |
-| Cashier | Speeds up customer payment at exit | Medium | Low |
-| Cleaning Worker | Cleans bathroom, wipes machines after use | Low | Low |
+| Personal Trainer | Zorda kalan müşterilere yardım eder (oyuncunun "!" tepkisini değiştirir) | Yüksek | Orta |
+| Laundry Worker | Çamaşır makinesini yükler, havlu kutusunu doldurur | Orta | Düşük |
+| Cashier | Çıkışta müşteri ödemesini hızlandırır | Orta | Düşük |
+| Cleaning Worker | Tuvaleti temizler, kullanım sonrası makineleri siler | Düşük | Düşük |
 
-### Worker Behavior
-- Each worker has a **task priority list** — they scan for their task type and walk to it
-- Workers have the same `IDLE → MOVING → WORKING` states as the player
-- Workers are independent of each other and the player
-- Player can dismiss (fire) a worker at any time
+### Worker Davranışı
+- Her worker'ın bir **task öncelik listesi** vardır — kendi task tipini tarar ve ona yürür
+- Worker'ların oyuncuyla aynı `IDLE → MOVING → WORKING` state'leri vardır
+- Worker'lar birbirinden ve oyuncudan bağımsızdır
+- Oyuncu bir worker'ı istediği zaman kovabilir
 
-### Unlock Condition
-Workers become available for hire after a specific milestone (TBD — tied to progression economy).
+### Açılış Koşulu
+Worker'lar belirli bir kilometre taşından sonra kiralanabilir hale gelir (TBD — ilerleme ekonomisine bağlı).
 
 ---
 
-## 8. Areas & Layout
+## 8. Alanlar & Yerleşim
 
-Each area is a predefined room with fixed item slots. Areas are unlocked by spending money and appear adjacent to existing rooms in the scene.
+Her alan sabit item slot'ları olan predefined bir odadır. Alanlar para harcanarak açılır ve sahnede mevcut odaların yanında belirir.
 
-### Area List
+### Alan Listesi
 
-| Area | Default | Key Items |
+| Alan | Varsayılan | Anahtar Item'lar |
 |---|---|---|
-| Main Gym | Unlocked | Treadmills, Bench, Bike, Dumbbell Rack, Pull-up Bar |
-| Locker Room | Unlocked | Lockers, Water Dispenser, Towel Box |
-| Bathroom | Unlocked | Showers, Soap Dispenser, Toilet Paper |
-| Sauna | Locked | Sauna Chairs |
-| Laundry | Locked | Washing Machine (enables full towel system) |
-| Boxing Ring | Locked | Boxing Bags |
+| Main Gym | Açık | Treadmill'ler, Bench, Bike, Dumbbell Rack, Pull-up Bar |
+| Locker Room | Açık | Dolaplar, Water Dispenser, Towel Box |
+| Bathroom | Açık | Duşlar, Soap Dispenser, Toilet Paper |
+| Sauna | Kilitli | Sauna Chair'ler |
+| Laundry | Kilitli | Washing Machine (tam havlu sistemini etkinleştirir) |
+| Boxing Ring | Kilitli | Boxing Bag'ler |
 
-### MVP Layout (Main Gym — single room)
+### MVP Yerleşim (Main Gym — tek oda)
 
 ```
 ┌─────────────────────────────────┐
-│           [Entrance]            │
+│           [Giriş]               │
 │                                 │
 │  [Treadmill]    [Treadmill]     │
 │                                 │
@@ -280,69 +280,69 @@ Each area is a predefined room with fixed item slots. Areas are unlocked by spen
 └─────────────────────────────────┘
 ```
 
-- Fixed slots per area — no drag-and-drop
-- Expansion unlocks new rooms that appear adjacent in the scene
+- Alan başına sabit slot'lar — drag-and-drop yok
+- Genişleme, sahnede bitişik beliren yeni odaları açar
 
 ---
 
-## 9. UI / HUD (PixiJS Layer)
+## 9. UI / HUD (PixiJS Katmanı)
 
-| Element | Position | Notes |
+| Eleman | Konum | Notlar |
 |---|---|---|
-| Money counter | Top-left | Animated +$X on earn |
-| Day / time bar | Top-center | Day cycle drives customer spawn rate |
-| Satisfaction meter | Top-right | Average of recent customers |
-| Task notification | Above player | Arrow + icon pointing to urgent task |
-| Machine tooltip | On hover | Shows tier, fee, status |
-| Upgrade panel | Bottom drawer | Opens on machine click when idle |
-| End-of-day summary | Full-screen overlay | Revenue, tips, incidents, day rating |
+| Para sayacı | Sol üst | Kazançta animasyonlu +$X |
+| Gün / zaman barı | Üst orta | Gün döngüsü müşteri spawn oranını yönetir |
+| Memnuniyet barı | Sağ üst | Son müşterilerin ortalaması |
+| Task bildirimi | Oyuncunun üstünde | Acil task'a işaret eden ok + ikon |
+| Makine tooltip'i | Hover'da | Tier, ücret, durum gösterir |
+| Upgrade paneli | Alt çekmece | Idle makineye tıklayınca açılır |
+| Gün sonu özeti | Tam ekran overlay | Gelir, bahşişler, olaylar, gün puanı |
 
 ---
 
-## 10. Game Feel Targets
+## 10. Oyun Hissi Hedefleri
 
-- Player should always feel **slightly busy** — never bored, never overwhelmed
-- Broken machine warning gives **enough time to react** but creates tension
-- Money animations (+$) and **GSAP popups** should feel satisfying
-- Customer "!" help requests should feel **urgent but fair**
-- Day end summary should feel like a **reward beat**
+- Oyuncu her zaman **hafif meşgul** hissetmeli — asla sıkılmamalı, asla bunalmamalı
+- Bozuk makine uyarısı **tepki vermeye yetecek zaman** vermeli ama gerilim yaratmalı
+- Para animasyonları (+$) ve **GSAP popup'ları** tatmin edici hissettirmeli
+- Müşteri "!" yardım istekleri **acil ama adil** hissettirmeli
+- Gün sonu özeti bir **ödül anı** gibi hissettirmeli
 
 ---
 
-## 11. Technical Notes
+## 11. Teknik Notlar
 
-| Concern | Approach |
+| Konu | Yaklaşım |
 |---|---|
-| 3D scene | Three.js, orthographic camera, toon/flat shading |
-| UI overlay | PixiJS canvas over Three.js canvas |
-| Animations | GSAP for UI; Three.js AnimationMixer for character walk/idle |
-| Customer pathfinding | Simple waypoint system (no full navmesh for MVP) |
-| State machine | Each machine and customer has explicit state enum |
-| Save system | localStorage JSON snapshot |
+| 3D sahne | Three.js, orthographic kamera, toon/flat shading |
+| UI overlay | Three.js canvas üzerinde PixiJS canvas |
+| Animasyonlar | UI için GSAP; karakter yürüme/idle için Three.js AnimationMixer |
+| Müşteri pathfinding | Basit waypoint sistemi (MVP için tam navmesh yok) |
+| State machine | Her makine ve müşterinin açık state enum'u var |
+| Save sistemi | localStorage JSON snapshot |
 
 ---
 
-## 12. Out of Scope (MVP)
+## 12. Kapsam Dışı (MVP)
 
-- Drag-and-drop machine placement
-- Multiple gym floors (vertical expansion)
-- Multiplayer / leaderboard
-- Sound design (placeholder only)
-- Workers (post-MVP — unlocked via progression milestones)
+- Drag-and-drop makine yerleştirme
+- Çoklu salon katı (dikey genişleme)
+- Çok oyunculu / liderlik tablosu
+- Ses tasarımı (yalnızca placeholder)
+- Worker'lar (post-MVP — ilerleme kilometre taşlarıyla açılır)
 
 ---
 
-## 13. Design Decisions
+## 13. Tasarım Kararları
 
-- [x] **Stamina bar** — No. Player runs indefinitely.
-- [x] **Day/night cycle** — No cycle. Always daytime; the gym runs continuously.
-- [x] **Machine placement** — Predefined fixed slots per room. No drag-and-drop placement. Machines can be upgraded in-place or sold to free the slot.
-- [x] **Failure state** — No bankruptcy or hard failure. Customer satisfaction affects tips and rating only; player always earns money and continues playing.
-- [x] **Expansion model** — Unlocking a new room adds a new predefined area to manage (Monkey Mart style). Layout is designed to maximize player movement and urgency, not player customization.
-- [x] **Machine malfunction trigger** — Random per session, weighted by wear. Break chance = `min(maxBreakChance, baseBreakChance + useCount × breakChanceGrowth)`. Checked once at end of each session. Each machine type has its own three parameters.
-- [x] **Wear reset** — Only a full repair (BROKEN state, costs money) resets `useCount` to 0. A quick fix (NEEDS_REPAIR) returns the machine to IDLE but does not reduce wear — use count keeps accumulating. This incentivises catching problems early before full breakdown.
-- [x] **Item categories** — Two categories: **Machine** (IDLE → IN_USE → NEEDS_REPAIR → BROKEN) and **Utility** (AVAILABLE → NEEDS_REFILL). All item types are data-driven config objects in `itemTypes.js`; no new class needed per item type.
-- [x] **Towel system** — Dual-slot Towel Box (clean count + dirty count). Customer takes clean towel on entry, returns dirty on exit. Washing Machine cycles dirty → clean. Enabled by unlocking Laundry Area.
-- [x] **Workers** — Post-MVP. Four types: Personal Trainer, Laundry Worker, Cashier, Cleaning Worker. Each automates a specific player task type.
-- [x] **Player movement** — WASD free movement with isometric screen-space projection (W/A/S/D map to screen up/left/down/right, not raw world axes). Arrow keys pan the camera independently. No click-to-move.
-- [x] **Reference game** — Monkey Mart (Poki). Player is always in motion reacting to chaos. Layout and urgency are the core fun — not building/designing the gym.
+- [x] **Stamina barı** — Yok. Oyuncu süresiz koşar.
+- [x] **Day/night döngüsü** — Döngü yok. Her zaman gündüz; salon sürekli çalışır.
+- [x] **Makine yerleştirme** — Oda başına predefined sabit slot'lar. Drag-and-drop yerleştirme yok. Makineler yerinde upgrade edilebilir veya slot'u boşaltmak için satılabilir.
+- [x] **Failure state** — İflas veya sert başarısızlık yok. Müşteri memnuniyeti yalnızca bahşiş ve puanı etkiler; oyuncu her zaman para kazanır ve oynamaya devam eder.
+- [x] **Genişleme modeli** — Yeni bir oda açmak yönetilecek yeni bir predefined alan ekler (Monkey Mart tarzı). Yerleşim, oyuncu özelleştirmesini değil oyuncu hareketini ve aciliyeti maksimize edecek şekilde tasarlanmıştır.
+- [x] **Makine arıza tetikleyicisi** — Session başına rastgele, aşınmaya göre ağırlıklı. Bozulma şansı = `min(maxBreakChance, baseBreakChance + useCount × breakChanceGrowth)`. Her session sonunda bir kez kontrol edilir. Her makine tipinin kendi üç parametresi vardır.
+- [x] **Aşınma sıfırlama** — Yalnızca full repair (BROKEN durumu, para maliyetli) `useCount`'u 0'a sıfırlar. Quick fix (NEEDS_REPAIR) makineyi IDLE'a döndürür ama aşınmayı azaltmaz — kullanım sayısı birikmeye devam eder. Bu, tam bozulmadan önce sorunları erken yakalamayı teşvik eder.
+- [x] **Item kategorileri** — İki kategori: **Machine** (IDLE → IN_USE → NEEDS_REPAIR → BROKEN) ve **Utility** (AVAILABLE → NEEDS_REFILL). Tüm item tipleri `itemTypes.js` içinde data-driven config objeleridir; item tipi başına yeni sınıf gerekmez.
+- [x] **Havlu sistemi** — İkili slot'lu Towel Box (temiz sayı + kirli sayı). Müşteri girişte temiz havlu alır, çıkışta kirli iade eder. Washing Machine kirliyi temize çevirir. Laundry Area açılınca etkinleşir.
+- [x] **Worker'lar** — Post-MVP. Dört tip: Personal Trainer, Laundry Worker, Cashier, Cleaning Worker. Her biri belirli bir oyuncu task tipini otomatikleştirir.
+- [x] **Oyuncu hareketi** — İzometrik ekran-uzayı projeksiyonlu WASD serbest hareket (W/A/S/D ham dünya eksenlerine değil ekran yukarı/sol/aşağı/sağ'a eşlenir). Ok tuşları kamerayı bağımsız kaydırır. Click-to-move yok.
+- [x] **Referans oyun** — Monkey Mart (Poki). Oyuncu kaosa tepki vererek sürekli hareket halindedir. Yerleşim ve aciliyet çekirdek eğlencedir — salon kurmak/tasarlamak değil.
